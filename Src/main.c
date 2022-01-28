@@ -26,6 +26,7 @@
 /* Private variables ---------------------------------------------------------*/
 osThreadId_t LedGreenTaskHandle;
 osTimerId_t idTimer1;
+uint8_t lcd_status = LCD_OK;
 /* Private function prototypes -----------------------------------------------*/
 static void MPU_Config(void);
 void osTimerCallback(void *argument);
@@ -43,7 +44,7 @@ void LedGreenTask(void *argument);
 int main(void)
 {
   /* Configure the MPU attributes */
-  MPU_Config();
+  // MPU_Config(); -- IF I UNCOMMENT SDRAM INIT RESULTS IN MEM INTERRUPT !!!!
 
   /* Enable the CPU Cache */
   CPU_CACHE_Enable();
@@ -66,6 +67,18 @@ int main(void)
   /* Initialize LEDs */
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED2);
+
+  /* Initialize the LCD */
+  lcd_status = BSP_LCD_Init();
+  while (lcd_status != LCD_OK);
+  BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
+  BSP_LCD_Clear(LCD_COLOR_WHITE);
+
+  uint8_t strptr[] = "   Hello world";
+  BSP_LCD_SetFont(&Font24);
+  BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
+  BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+  BSP_LCD_DisplayStringAtLine(7, strptr);
 
   osKernelInitialize();
 
