@@ -21,6 +21,8 @@
 #include "main.h"
 #include "stm32f7xx_it.h"
 #include "cmsis_os.h"
+#include "FreeRTOS.h"
+#include "task.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -108,7 +110,15 @@ void DebugMon_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  osSystickHandler();
+  // osSystickHandler();
+#if (INCLUDE_xTaskGetSchedulerState == 1 )
+  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
+  {
+#endif /* INCLUDE_xTaskGetSchedulerState */
+  xPortSysTickHandler();
+#if (INCLUDE_xTaskGetSchedulerState == 1 )
+  }
+#endif /* INCLUDE_xTaskGetSchedulerState */
 }
 
 /******************************************************************************/

@@ -24,12 +24,15 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+osThreadId_t LedGreenTaskHandle;
+osTimerId_t idTimer1;
 /* Private function prototypes -----------------------------------------------*/
 static void MPU_Config(void);
-static void osTimerCallback(void const *argument);
+void osTimerCallback(void *argument);
 static void ToggleLEDsThread(void const *argument);
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
+void LedGreenTask(void *argument);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -64,15 +67,22 @@ int main(void)
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED2);
 
+  osKernelInitialize();
+
   /* Create Timer */
-  osTimerDef(LEDTimer, osTimerCallback);
-  osTimerId osTimer = osTimerCreate(osTimer(LEDTimer), osTimerPeriodic, NULL);
+  idTimer1 = osTimerNew(osTimerCallback, osTimerPeriodic, NULL, NULL);
   /* Start Timer */
-  osTimerStart(osTimer, 200);
+  osTimerStart(idTimer1, 100);
 
   /* Create LED Thread */
-  osThreadDef(LEDThread, ToggleLEDsThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
-  osThreadCreate(osThread(LEDThread), NULL);
+  //osThreadDef(LEDThread, ToggleLEDsThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+  //osThreadCreate(osThread(LEDThread), NULL);
+  const osThreadAttr_t LedGreenTask_attributes = {
+      .name = "GreenTask",
+      .priority = (osPriority_t) osPriorityNormal,
+      .stack_size = 256
+    };
+    LedGreenTaskHandle = osThreadNew(LedGreenTask, NULL, &LedGreenTask_attributes);
 
   /* Start scheduler */
   osKernelStart();
@@ -87,7 +97,7 @@ int main(void)
   * @param  argument not used
   * @retval None
   */
-static void osTimerCallback(void const *argument)
+void osTimerCallback(void *argument)
 {
   (void) argument;
 
@@ -111,6 +121,17 @@ static void ToggleLEDsThread(void const *argument)
 
     osDelay(400);
   }
+}
+
+void LedGreenTask(void *argument)
+{
+  /* Infinite loop */
+  for(;;)
+  {
+	BSP_LED_Toggle(LED_GREEN);
+    osDelay(1000);
+  }
+
 }
 
 /**

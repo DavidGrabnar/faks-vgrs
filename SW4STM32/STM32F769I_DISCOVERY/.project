@@ -138,44 +138,9 @@
 			<locationURI>PARENT-2-PROJECT_LOC/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/FreeRTOS/list.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/FreeRTOS/Source/list.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/FreeRTOS/queue.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/FreeRTOS/Source/queue.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/FreeRTOS/tasks.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/FreeRTOS/Source/tasks.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/FreeRTOS/timers.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/FreeRTOS/Source/timers.c</locationURI>
-		</link>
-		<link>
 			<name>Drivers/BSP/STM32F769I_Discovery/stm32f769i_discovery.c</name>
 			<type>1</type>
 			<locationURI>PARENT-2-PROJECT_LOC/Drivers/BSP/STM32F769I-Discovery/stm32f769i_discovery.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/FreeRTOS/CMSIS_RTOS/cmsis_os.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/FreeRTOS/portable/heap_4.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/FreeRTOS/portable/port.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
