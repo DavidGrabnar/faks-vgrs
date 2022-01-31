@@ -112,6 +112,8 @@
                                     <listOptionValue builtIn="false" value="&quot;D:\STM\STM32Cube\Repository\STM32Cube_FW_F7_V1.16.2\Middlewares\Third_Party\FreeRTOS\Source\include&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;D:\STM\STM32Cube\Repository\STM32Cube_FW_F7_V1.16.2\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM7\r0p1&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;D:\Faks\S5\VGRS\STM\FreeRTOS_Timers\SW4STM32\STM32F769I_DISCOVERY\Application\User\SwapChain&quot;"/>
                                     								
                                 </option>
                                 								
@@ -240,6 +242,7 @@
         <!--scannerConfigBuildInfo instanceId="fr.ac6.managedbuild.config.gnu.cross.exe.release.$(RELEASE_CONFIG_UID);fr.ac6.managedbuild.config.gnu.cross.exe.release.$(RELEASE_CONFIG_UID).;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.$(RELEASE_TOOL_COMPILER_UID);cdt.managedbuild.tool.gnu.c.compiler.input.$(RELEASE_TOOL_COMPILER_INPUT_UID)">
 			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo-->
+        		
         <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
         		
         <scannerConfigBuildInfo instanceId="fr.ac6.managedbuild.config.gnu.cross.exe.debug.718834074;fr.ac6.managedbuild.config.gnu.cross.exe.debug.718834074.;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.838577051;fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.1145124420">

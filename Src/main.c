@@ -84,6 +84,7 @@ osThreadId_t LedGreenTaskHandle;
 osTimerId_t idTimer1;
 uint8_t lcd_status = LCD_OK;
 
+Screen *screen;
 osThreadId_t GameUpdateTaskHandle;
 
 uint8_t bitmap[] = ((uint8_t[]){
@@ -180,11 +181,10 @@ int main(void)
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED2);
 
+
   /* Initialize the LCD */
-  lcd_status = BSP_LCD_Init();
-  while (lcd_status != LCD_OK);
-  BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
-  BSP_LCD_Clear(LCD_COLOR_WHITE);
+  screen = sc_screen_init();
+  while (screen == NULL);
 
   /*
   uint8_t strptr[] = "   Hello world";
@@ -272,6 +272,7 @@ void GameUpdateTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	sc_screen_swap_buffers(screen);
 	si_update();
 	si_render();
     osDelay(si_game1.tick_duration);
