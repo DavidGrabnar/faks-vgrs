@@ -30,6 +30,7 @@ extern "C" {
 #include "stm32f769i_discovery.h"
 #include "stm32f769i_discovery_lcd.h"
 #include "swap_chain.h"
+#include "space_invaders.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

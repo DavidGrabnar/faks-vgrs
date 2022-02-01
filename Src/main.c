@@ -22,62 +22,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 
-struct si_enemy_sprite
-{
-	// height = bitmap_length / width
-	int width;
-	int bitmap_length;
-	int scale;
-	uint8_t* bitmap;
-};
-
-struct si_enemy
-{
-	struct si_enemy_sprite* sprites;
-	int sprite_count;
-	// TODO bullet
-};
-
-enum si_enemy_group_direction {
-	SI_ENEMY_GROUP_DIRECTION_LEFT = -1,
-	SI_ENEMY_GROUP_DIRECTION_RIGHT = 1
-};
-
-struct si_enemy_group
-{
-	struct si_enemy * enemy;
-	int count;
-	int formation_width;
-	int full_width;
-	int step;
-
-	// dynamic
-	enum si_enemy_group_direction group_direction;
-	int group_offset;
-};
-
-struct si_level
-{
-	struct si_enemy_group* groups;
-	int group_count;
-
-};
-
-struct si_game
-{
-	struct si_level * levels;
-	int level_count;
-	int header_height;
-	int player_space_height;
-	int tick_duration; // [ms]
-};
 
 /* Private define ------------------------------------------------------------*/
 #define LCD_WIDTH 800
 #define LCD_HEIGHT 480
 
-#define SI_ENEMY_WIDTH 10
-#define SI_ENEMY_HEIGHT 10
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 osThreadId_t LedGreenTaskHandle;
@@ -85,56 +34,8 @@ osTimerId_t idTimer1;
 uint8_t lcd_status = LCD_OK;
 
 Screen *screen;
+struct si_game * game;
 osThreadId_t GameUpdateTaskHandle;
-
-uint8_t bitmap[] = ((uint8_t[]){
-	0b00000000, 0b00000000,
-	0b00001000, 0b00010000,
-	0b00000100, 0b00100000,
-	0b00001111, 0b11110000,
-	0b00011011, 0b11011000,
-	0b00111111, 0b11111100,
-	0b00101111, 0b11110100,
-	0b00101000, 0b00010100,
-	0b00000110, 0b01100000,
-	0b00000000, 0b00000000,
-});
-
-struct si_enemy_sprite si_enemy_sprite1 = {
-	16,
-	160,
-	5,
-	bitmap
-};
-
-struct si_enemy si_enemy1 = {
-	&si_enemy_sprite1,
-	1
-};
-
-struct si_enemy_group si_enemy_group1 = {
-	&si_enemy1,
-	10,
-	LCD_WIDTH * 0.6,
-	LCD_WIDTH * 0.8,
-	20,
-
-	SI_ENEMY_GROUP_DIRECTION_LEFT,
-	0
-};
-
-struct si_level si_level1 = {
-	&si_enemy_group1,
-	1
-};
-
-struct si_game si_game1 = {
-	&si_level1,
-	1,
-	100,
-	100,
-	500
-};
 
 /* Private function prototypes -----------------------------------------------*/
 static void MPU_Config(void);
@@ -145,8 +46,6 @@ static void CPU_CACHE_Enable(void);
 void LedGreenTask(void *argument);
 void GameUpdateTask(void *argument);
 
-void si_render();
-void si_update();
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -184,6 +83,7 @@ int main(void)
 
   /* Initialize the LCD */
   screen = sc_screen_init();
+  game = si_init(screen);
   while (screen == NULL);
 
   /*
@@ -273,9 +173,11 @@ void GameUpdateTask(void *argument)
   for(;;)
   {
 	sc_screen_swap_buffers(screen);
-	si_update();
-	si_render();
-    osDelay(si_game1.tick_duration);
+	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+	BSP_LCD_FillRect(0, 0, screen->width, screen->height);
+	si_update(game);
+	si_render(screen, game);
+    osDelay(game->tick_duration);
   }
 
 }
@@ -417,80 +319,3 @@ static void CPU_CACHE_Enable(void)
   /* Enable D-Cache */
   SCB_EnableDCache();
 }
-
-void si_render()
-{
-	//render game
-	BSP_LCD_Clear(LCD_COLOR_BLACK);
-
-	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-	BSP_LCD_FillRect(0, 0, LCD_WIDTH, si_game1.header_height);
-
-	BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
-	BSP_LCD_FillRect(0, LCD_HEIGHT - si_game1.player_space_height, LCD_WIDTH, si_game1.player_space_height);
-
-	//render level
-	struct si_level *curr_level = &si_game1.levels[0];
-	// render enemy groups
-	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
-		struct si_enemy_group * curr_group = &curr_level->groups[enemy_group_index];
-		struct si_enemy * curr_enemy = curr_group->enemy;
-		struct si_enemy_sprite * curr_sprite = &curr_enemy->sprites[0];
-		int height = curr_sprite->bitmap_length / curr_sprite->width;
-		int enemy_per_row = curr_group->formation_width / (curr_sprite->width * curr_sprite->scale); // floor
-		int enemy_rows = (curr_group->count + (enemy_per_row - 1)) / enemy_per_row; // ceil
-		int enemy_last_row = curr_group->count % enemy_per_row;
-
-		for (int row_index = 0; row_index < enemy_rows; row_index++) {
-			int per_row = row_index == enemy_rows - 1 ? enemy_last_row : enemy_per_row;
-
-			int group_space_left_width = curr_group->formation_width - (curr_sprite->width * curr_sprite->scale) * per_row;
-			int enemy_pos_x = (LCD_WIDTH - curr_group->formation_width) / 2 + group_space_left_width / 2 + curr_group->group_offset;
-			int enemy_pos_y = si_game1.header_height + (height * curr_sprite->scale) * row_index;
-			// render enemy
-			for (int cell_index = 0; cell_index < per_row; cell_index++) {
-				for (int i = 0; i < height; i++) {
-					for (int j = 0; j < curr_sprite->width; j++) {
-						int bit_index = i * curr_sprite->width + j;
-						int byte_index = bit_index / 8;
-						int bit_offset = bit_index % 8;
-
-						uint32_t color = curr_sprite->bitmap[byte_index] & (1 << (7 - bit_offset))
-							? LCD_COLOR_WHITE
-							: LCD_COLOR_BLACK;
-
-						BSP_LCD_SetTextColor(color);
-						BSP_LCD_FillRect(enemy_pos_x + j * curr_sprite->scale, enemy_pos_y + i * curr_sprite->scale, curr_sprite->scale, curr_sprite->scale);
-					}
-				}
-				enemy_pos_x += curr_sprite->width * curr_sprite->scale;
-			}
-		}
-	};
-
-}
-
-void si_update() {
-	int curr_offset = si_game1.levels[0].groups[0].group_offset;
-	int curr_direction = si_game1.levels[0].groups[0].group_direction;
-
-	int step = si_game1.levels[0].groups[0].step * curr_direction;
-	int max_offset = (si_game1.levels[0].groups[0].full_width - si_game1.levels[0].groups[0].formation_width) / 2;
-
-	int next_offset = curr_offset + step;
-	int next_direction = curr_direction;
-	if (curr_direction == SI_ENEMY_GROUP_DIRECTION_LEFT) {
-		if (next_offset < -max_offset) {
-			next_offset = -max_offset + (next_offset % max_offset);
-			next_direction = SI_ENEMY_GROUP_DIRECTION_RIGHT;
-		}
-	} else if (curr_direction == SI_ENEMY_GROUP_DIRECTION_RIGHT) {
-		if (next_offset > max_offset) {
-			next_offset = max_offset - (next_offset % max_offset);
-			next_direction = SI_ENEMY_GROUP_DIRECTION_LEFT;
-		}
-	}
-
-	si_game1.levels[0].groups[0].group_offset = next_offset;
-	si_game1.levels[0].groups[0].group_direction = next_direction;
-};
