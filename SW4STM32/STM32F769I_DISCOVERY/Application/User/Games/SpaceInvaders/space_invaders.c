@@ -7,32 +7,36 @@
 
 #include <stdlib.h>
 #include "space_invaders.h"
+#include "assets.h"
 
 
 struct si_game * si_init(Screen * screen) {
 
-	uint8_t bitmap1[] = {
-		0b00000000, 0b00000000,
-		0b00001000, 0b00010000,
-		0b00000100, 0b00100000,
-		0b00001111, 0b11110000,
-		0b00011011, 0b11011000,
-		0b00111111, 0b11111100,
-		0b00101111, 0b11110100,
-		0b00101000, 0b00010100,
-		0b00000110, 0b01100000,
-		0b00000000, 0b00000000,
-	};
+	uint8_t * bitmap_player = (uint8_t *) malloc(sizeof(SI_PLAYER_BITMAP));
+	memcpy(bitmap_player, SI_PLAYER_BITMAP, sizeof(SI_PLAYER_BITMAP));
 
-	uint8_t * bitmap = (uint8_t *) malloc(sizeof(bitmap1));
-	memcpy(bitmap, bitmap1, sizeof(bitmap1));
+	struct si_sprite * si_player_sprite1 = (struct si_sprite *) malloc(sizeof(struct si_sprite));
 
-	struct si_enemy_sprite * si_enemy_sprite1 = (struct si_enemy_sprite *) malloc(sizeof(struct si_enemy_sprite));
+	si_player_sprite1->width = SI_PLAYER_WIDTH;
+	si_player_sprite1->bitmap_length = SI_PLAYER_LENGTH;
+	si_player_sprite1->scale = SI_PLAYER_SCALE;
+	si_player_sprite1->bitmap = bitmap_player;
 
-	si_enemy_sprite1->width = 16;
-	si_enemy_sprite1->bitmap_length = 160;
-	si_enemy_sprite1->scale = 5;
-	si_enemy_sprite1->bitmap = bitmap;
+	struct si_player * si_player = (struct si_player *) malloc(sizeof(struct si_player));
+
+	si_player->sprites = si_player_sprite1;
+	si_player->sprite_count = 1;
+	si_player->offset = 0;
+
+	uint8_t * bitmap_enemy = (uint8_t *) malloc(sizeof(SI_ENEMY1_BITMAP));
+	memcpy(bitmap_enemy, SI_ENEMY1_BITMAP, sizeof(SI_ENEMY1_BITMAP));
+
+	struct si_sprite * si_enemy_sprite1 = (struct si_sprite *) malloc(sizeof(struct si_sprite));
+
+	si_enemy_sprite1->width = SI_ENEMY1_WIDTH;
+	si_enemy_sprite1->bitmap_length = SI_ENEMY1_LENGTH;
+	si_enemy_sprite1->scale = SI_ENEMY1_SCALE;
+	si_enemy_sprite1->bitmap = bitmap_enemy;
 
 	struct si_enemy * si_enemy1 = (struct si_enemy *) malloc(sizeof(struct si_enemy));
 
@@ -124,7 +128,7 @@ void si_render(Screen * screen, struct si_game * game)
 	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
 		struct si_enemy_group * curr_group = &curr_level->groups[enemy_group_index];
 		struct si_enemy * curr_enemy = curr_group->enemy;
-		struct si_enemy_sprite * curr_sprite = &curr_enemy->sprites[0];
+		struct si_sprite * curr_sprite = &curr_enemy->sprites[0];
 		int height = curr_sprite->bitmap_length / curr_sprite->width;
 		int enemy_per_row = curr_group->formation_width / (curr_sprite->width * curr_sprite->scale); // floor
 		int enemy_rows = (curr_group->count + (enemy_per_row - 1)) / enemy_per_row; // ceil
@@ -137,24 +141,29 @@ void si_render(Screen * screen, struct si_game * game)
 			int enemy_pos_x = (screen->width - curr_group->formation_width) / 2 + group_space_left_width / 2 + curr_group->group_offset;
 			// render enemy
 			for (int cell_index = 0; cell_index < per_row; cell_index++) {
-				for (int i = 0; i < height; i++) {
-					for (int j = 0; j < curr_sprite->width; j++) {
-						int bit_index = i * curr_sprite->width + j;
-						int byte_index = bit_index / 8;
-						int bit_offset = bit_index % 8;
+				si_render_sprite(curr_sprite, enemy_pos_x, group_pos_y);
 
-						uint32_t color = curr_sprite->bitmap[byte_index] & (1 << (7 - bit_offset))
-							? LCD_COLOR_WHITE
-							: LCD_COLOR_BLACK;
-
-						BSP_LCD_SetTextColor(color);
-						BSP_LCD_FillRect(enemy_pos_x + j * curr_sprite->scale, group_pos_y + i * curr_sprite->scale, curr_sprite->scale, curr_sprite->scale);
-					}
-				}
 				enemy_pos_x += curr_sprite->width * curr_sprite->scale;
 			}
 			group_pos_y += (height * curr_sprite->scale);
 		}
 	};
+}
 
+void si_render_sprite(struct si_sprite * sprite, int x, int y) {
+	int height = sprite->bitmap_length / sprite->width;
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < sprite->width; j++) {
+			int bit_index = i * sprite->width + j;
+			int byte_index = bit_index / 8;
+			int bit_offset = bit_index % 8;
+
+			uint32_t color = sprite->bitmap[byte_index] & (1 << (7 - bit_offset))
+				? LCD_COLOR_WHITE
+				: LCD_COLOR_BLACK;
+
+			BSP_LCD_SetTextColor(color);
+			BSP_LCD_FillRect(x + j * sprite->scale, y + i * sprite->scale, sprite->scale, sprite->scale);
+		}
+	}
 }

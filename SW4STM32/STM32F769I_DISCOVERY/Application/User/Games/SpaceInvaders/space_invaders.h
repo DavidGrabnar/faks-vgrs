@@ -11,7 +11,7 @@
 #include "swap_chain.h"
 #include "stm32f769i_discovery_lcd.h"
 
-struct si_enemy_sprite
+struct si_sprite
 {
 	// height = bitmap_length / width
 	int width;
@@ -20,9 +20,19 @@ struct si_enemy_sprite
 	uint8_t* bitmap;
 };
 
+struct si_player
+{
+	struct si_sprite* sprites;
+	int sprite_count;
+	// TODO bullet
+
+	// dynamic
+	int offset;
+};
+
 struct si_enemy
 {
-	struct si_enemy_sprite* sprites;
+	struct si_sprite* sprites;
 	int sprite_count;
 	// TODO bullet
 };
@@ -64,5 +74,7 @@ struct si_game
 struct si_game * si_init(Screen * screen);
 void si_update(struct si_game * game);
 void si_render(Screen * screen, struct si_game * game);
+
+void si_render_sprite(struct si_sprite * sprite, int x, int y);
 
 #endif /* APPLICATION_USER_GAMES_SPACEINVADERS_SPACE_INVADERS_H_ */
