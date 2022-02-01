@@ -173,7 +173,7 @@ void GameUpdateTask(void *argument)
   for(;;)
   {
 	sc_screen_swap_buffers(screen);
-	si_update(game);
+	si_update(screen, game);
 	si_render(screen, game);
     osDelay(game->tick_duration);
   }
