@@ -92,16 +92,9 @@ void si_update(struct si_game * game) {
 
 		int next_offset = curr_offset + step;
 		int next_direction = curr_direction;
-		if (curr_direction == SI_ENEMY_GROUP_DIRECTION_LEFT) {
-			if (next_offset < -max_offset) {
-				next_offset = -max_offset + (next_offset % max_offset);
-				next_direction = SI_ENEMY_GROUP_DIRECTION_RIGHT;
-			}
-		} else if (curr_direction == SI_ENEMY_GROUP_DIRECTION_RIGHT) {
-			if (next_offset > max_offset) {
-				next_offset = max_offset - (next_offset % max_offset);
-				next_direction = SI_ENEMY_GROUP_DIRECTION_LEFT;
-			}
+		if (abs(next_offset) > max_offset) {
+			next_offset = (next_offset / abs(next_offset)) * (max_offset + (next_offset % max_offset));
+			next_direction *= -1;
 		}
 
 		curr_group->group_offset = next_offset;
