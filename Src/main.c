@@ -173,8 +173,6 @@ void GameUpdateTask(void *argument)
   for(;;)
   {
 	sc_screen_swap_buffers(screen);
-	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-	BSP_LCD_FillRect(0, 0, screen->width, screen->height);
 	si_update(game);
 	si_render(screen, game);
     osDelay(game->tick_duration);

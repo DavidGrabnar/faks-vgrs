@@ -39,20 +39,28 @@ struct si_game * si_init(Screen * screen) {
 	si_enemy1->sprites = si_enemy_sprite1;
 	si_enemy1->sprite_count = 1;
 
-	struct si_enemy_group * si_enemy_group1 = (struct si_enemy_group *) malloc(sizeof(struct si_enemy_group));
+	struct si_enemy_group * si_enemy_groups = (struct si_enemy_group *) calloc(2, sizeof(struct si_enemy_group));
 
-	si_enemy_group1->enemy = si_enemy1;
-	si_enemy_group1->count = 10;
-	si_enemy_group1->formation_width = screen->width * 0.6;
-	si_enemy_group1->full_width = screen->width * 0.8;
-	si_enemy_group1->step = 20;
-	si_enemy_group1->group_direction = SI_ENEMY_GROUP_DIRECTION_LEFT;
-	si_enemy_group1->group_offset = 0;
+	si_enemy_groups[0].enemy = si_enemy1;
+	si_enemy_groups[0].count = 10;
+	si_enemy_groups[0].formation_width = screen->width * 0.6;
+	si_enemy_groups[0].full_width = screen->width * 0.8;
+	si_enemy_groups[0].step = 20;
+	si_enemy_groups[0].group_direction = SI_ENEMY_GROUP_DIRECTION_LEFT;
+	si_enemy_groups[0].group_offset = 0;
+
+	si_enemy_groups[1].enemy = si_enemy1;
+	si_enemy_groups[1].count = 5;
+	si_enemy_groups[1].formation_width = screen->width * 0.6;
+	si_enemy_groups[1].full_width = screen->width * 0.8;
+	si_enemy_groups[1].step = 10;
+	si_enemy_groups[1].group_direction = SI_ENEMY_GROUP_DIRECTION_LEFT;
+	si_enemy_groups[1].group_offset = 0;
 
 	struct si_level * si_level1 = (struct si_level *) malloc(sizeof(struct si_level));
 
-	si_level1->groups = si_enemy_group1;
-	si_level1->group_count = 1;
+	si_level1->groups = si_enemy_groups;
+	si_level1->group_count = 2;
 
 	struct si_game * game = (struct si_game *) malloc(sizeof(struct si_game));
 
@@ -66,28 +74,35 @@ struct si_game * si_init(Screen * screen) {
 }
 
 void si_update(struct si_game * game) {
-	int curr_offset = game->levels[0].groups[0].group_offset;
-	int curr_direction = game->levels[0].groups[0].group_direction;
+	// update level
+	struct si_level *curr_level = &game->levels[0];
 
-	int step = game->levels[0].groups[0].step * curr_direction;
-	int max_offset = (game->levels[0].groups[0].full_width - game->levels[0].groups[0].formation_width) / 2;
+	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
+		struct si_enemy_group *curr_group = &curr_level->groups[enemy_group_index];
 
-	int next_offset = curr_offset + step;
-	int next_direction = curr_direction;
-	if (curr_direction == SI_ENEMY_GROUP_DIRECTION_LEFT) {
-		if (next_offset < -max_offset) {
-			next_offset = -max_offset + (next_offset % max_offset);
-			next_direction = SI_ENEMY_GROUP_DIRECTION_RIGHT;
+		int curr_offset = curr_group->group_offset;
+		int curr_direction = curr_group->group_direction;
+
+		int step = curr_group->step * curr_direction;
+		int max_offset = (curr_group->full_width - curr_group->formation_width) / 2;
+
+		int next_offset = curr_offset + step;
+		int next_direction = curr_direction;
+		if (curr_direction == SI_ENEMY_GROUP_DIRECTION_LEFT) {
+			if (next_offset < -max_offset) {
+				next_offset = -max_offset + (next_offset % max_offset);
+				next_direction = SI_ENEMY_GROUP_DIRECTION_RIGHT;
+			}
+		} else if (curr_direction == SI_ENEMY_GROUP_DIRECTION_RIGHT) {
+			if (next_offset > max_offset) {
+				next_offset = max_offset - (next_offset % max_offset);
+				next_direction = SI_ENEMY_GROUP_DIRECTION_LEFT;
+			}
 		}
-	} else if (curr_direction == SI_ENEMY_GROUP_DIRECTION_RIGHT) {
-		if (next_offset > max_offset) {
-			next_offset = max_offset - (next_offset % max_offset);
-			next_direction = SI_ENEMY_GROUP_DIRECTION_LEFT;
-		}
+
+		curr_group->group_offset = next_offset;
+		curr_group->group_direction = next_direction;
 	}
-
-	game->levels[0].groups[0].group_offset = next_offset;
-	game->levels[0].groups[0].group_direction = next_direction;
 }
 
 
@@ -104,6 +119,7 @@ void si_render(Screen * screen, struct si_game * game)
 
 	//render level
 	struct si_level *curr_level = &game->levels[0];
+	int group_pos_y = game->header_height;
 	// render enemy groups
 	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
 		struct si_enemy_group * curr_group = &curr_level->groups[enemy_group_index];
@@ -119,7 +135,6 @@ void si_render(Screen * screen, struct si_game * game)
 
 			int group_space_left_width = curr_group->formation_width - (curr_sprite->width * curr_sprite->scale) * per_row;
 			int enemy_pos_x = (screen->width - curr_group->formation_width) / 2 + group_space_left_width / 2 + curr_group->group_offset;
-			int enemy_pos_y = game->header_height + (height * curr_sprite->scale) * row_index;
 			// render enemy
 			for (int cell_index = 0; cell_index < per_row; cell_index++) {
 				for (int i = 0; i < height; i++) {
@@ -133,11 +148,12 @@ void si_render(Screen * screen, struct si_game * game)
 							: LCD_COLOR_BLACK;
 
 						BSP_LCD_SetTextColor(color);
-						BSP_LCD_FillRect(enemy_pos_x + j * curr_sprite->scale, enemy_pos_y + i * curr_sprite->scale, curr_sprite->scale, curr_sprite->scale);
+						BSP_LCD_FillRect(enemy_pos_x + j * curr_sprite->scale, group_pos_y + i * curr_sprite->scale, curr_sprite->scale, curr_sprite->scale);
 					}
 				}
 				enemy_pos_x += curr_sprite->width * curr_sprite->scale;
 			}
+			group_pos_y += (height * curr_sprite->scale);
 		}
 	};
 
