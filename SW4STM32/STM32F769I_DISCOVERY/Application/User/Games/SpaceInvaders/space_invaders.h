@@ -18,17 +18,20 @@ enum si_direction {
 
 struct si_sprite
 {
-	// height = bitmap_length / width
+	// height = length / width
 	int width;
-	int bitmap_length;
+	int length;
+	int count;
 	int scale;
-	uint8_t* bitmap;
+	uint8_t** bitmaps;
+
+	// dynamic
+	int index;
 };
 
 struct si_enemy
 {
-	struct si_sprite* sprites;
-	int sprite_count;
+	struct si_sprite* sprite;
 	// TODO bullet
 };
 
@@ -41,8 +44,7 @@ struct si_movement
 
 struct si_player
 {
-	struct si_sprite* sprites;
-	int sprite_count;
+	struct si_sprite* sprite;
 	// TODO bullet
 
 	// dynamic
@@ -81,6 +83,7 @@ void si_update(Screen * screen, struct si_game * game);
 void si_render(Screen * screen, struct si_game * game);
 
 void si_update_movement(struct si_movement * movement, int max_offset);
+void si_update_sprite(struct si_sprite * sprite);
 void si_render_sprite(struct si_sprite * sprite, int x, int y);
 
 #endif /* APPLICATION_USER_GAMES_SPACEINVADERS_SPACE_INVADERS_H_ */
