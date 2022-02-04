@@ -10,8 +10,8 @@
 #include "assets.h"
 
 
-struct si_game * si_init(Screen * screen) {
-
+struct si_game * si_init(Screen * screen)
+{
 	uint8_t ** bitmaps_player = (uint8_t **) calloc(1, sizeof(uint8_t *));
 	uint8_t * bitmap_player = (uint8_t *) malloc(sizeof(SI_PLAYER_BITMAP));
 	memcpy(bitmap_player, SI_PLAYER_BITMAP, sizeof(SI_PLAYER_BITMAP));
@@ -29,7 +29,8 @@ struct si_game * si_init(Screen * screen) {
 	struct si_player * si_player = (struct si_player *) malloc(sizeof(struct si_player));
 
 	struct si_movement * si_movement_player = (struct si_movement *) malloc(sizeof(struct si_movement));
-	si_movement_player->direction = SI_DIRECTION_LEFT;
+	si_movement_player->direction = SI_DIRECTION_NONE;
+	si_movement_player->mode = SI_MOVEMENT_MODE_MANUAL;
 	si_movement_player->offset = 0;
 	si_movement_player->step = 20;
 
@@ -61,6 +62,7 @@ struct si_game * si_init(Screen * screen) {
 
 	struct si_movement * si_movement1 = (struct si_movement *) malloc(sizeof(struct si_movement));
 	si_movement1->direction = SI_DIRECTION_LEFT;
+	si_movement1->mode = SI_MOVEMENT_MODE_AUTO;
 	si_movement1->offset = 0;
 	si_movement1->step = 20;
 
@@ -93,6 +95,7 @@ struct si_game * si_init(Screen * screen) {
 
 	struct si_movement * si_movement2 = (struct si_movement *) malloc(sizeof(struct si_movement));
 	si_movement2->direction = SI_DIRECTION_LEFT;
+	si_movement2->mode = SI_MOVEMENT_MODE_AUTO;
 	si_movement2->offset = 0;
 	si_movement2->step = 10;
 
@@ -118,7 +121,19 @@ struct si_game * si_init(Screen * screen) {
 	return game;
 }
 
-void si_update(Screen * screen, struct si_game * game) {
+void si_update(Screen * screen, struct si_game * game)
+{
+	// handle input TODO refactor
+	int left_down = HAL_GPIO_ReadPin(GPIOJ, GPIO_PIN_0);
+	int right_down = HAL_GPIO_ReadPin(GPIOJ, GPIO_PIN_1);
+
+	if (left_down)
+		game->player->movement->direction = SI_DIRECTION_LEFT;
+	else if (right_down)
+		game->player->movement->direction = SI_DIRECTION_RIGHT;
+	else
+		game->player->movement->direction = SI_DIRECTION_NONE;
+
 	// update level
 	struct si_level *curr_level = &game->levels[0];
 
@@ -136,6 +151,8 @@ void si_update(Screen * screen, struct si_game * game) {
 
 void si_update_movement(struct si_movement * movement, int max_offset)
 {
+	if (movement->direction == SI_DIRECTION_NONE) return;
+
 	int curr_offset = movement->offset;
 	int curr_direction = movement->direction;
 
@@ -144,8 +161,13 @@ void si_update_movement(struct si_movement * movement, int max_offset)
 	int next_offset = curr_offset + curr_step;
 	int next_direction = curr_direction;
 	if (abs(next_offset) > max_offset) {
-		next_offset = (next_offset / abs(next_offset)) * (max_offset + (next_offset % max_offset));
-		next_direction *= -1;
+		if (movement->mode == SI_MOVEMENT_MODE_AUTO) {
+			next_offset = (next_offset / abs(next_offset)) * (max_offset + (next_offset % max_offset));
+			next_direction *= -1;
+		} else {
+			next_offset = next_direction * max_offset;
+		}
+
 	}
 
 	movement->offset = next_offset;
@@ -204,7 +226,8 @@ void si_render(Screen * screen, struct si_game * game)
 	si_render_sprite(sprite, pos_x, screen->height - (sprite->length / sprite->width) * sprite->scale);
 }
 
-void si_render_sprite(struct si_sprite * sprite, int x, int y) {
+void si_render_sprite(struct si_sprite * sprite, int x, int y)
+{
 	uint8_t * bitmap = sprite->bitmaps[sprite->index];
 	int height = sprite->length / sprite->width;
 	for (int i = 0; i < height; i++) {

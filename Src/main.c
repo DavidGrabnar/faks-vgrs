@@ -80,6 +80,17 @@ int main(void)
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED2);
 
+  /* Initialize PBs */
+  // TODO refactor to config and to separate control and task with iterrupts
+  GPIO_InitTypeDef init = {0};
+  init.Mode = GPIO_MODE_INPUT;
+
+  init.Pin = GPIO_PIN_0;
+  HAL_GPIO_Init(GPIOJ, &init);
+
+  init.Pin = GPIO_PIN_1;
+  HAL_GPIO_Init(GPIOJ, &init);
+
 
   /* Initialize the LCD */
   screen = sc_screen_init();

@@ -13,7 +13,13 @@
 
 enum si_direction {
 	SI_DIRECTION_LEFT = -1,
+	SI_DIRECTION_NONE = 0,
 	SI_DIRECTION_RIGHT = 1
+};
+
+enum si_movement_mode {
+	SI_MOVEMENT_MODE_AUTO,
+	SI_MOVEMENT_MODE_MANUAL
 };
 
 struct si_sprite
@@ -38,6 +44,7 @@ struct si_enemy
 struct si_movement
 {
 	enum si_direction direction;
+	enum si_movement_mode mode;
 	int offset;
 	int step;
 };
