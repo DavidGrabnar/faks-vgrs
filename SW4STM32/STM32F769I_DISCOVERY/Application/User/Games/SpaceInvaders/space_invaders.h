@@ -11,15 +11,20 @@
 #include "swap_chain.h"
 #include "stm32f769i_discovery_lcd.h"
 
-enum si_direction {
+
+enum si_direction
+{
 	SI_DIRECTION_LEFT = -1,
 	SI_DIRECTION_NONE = 0,
 	SI_DIRECTION_RIGHT = 1
 };
 
-enum si_movement_mode {
-	SI_MOVEMENT_MODE_AUTO,
-	SI_MOVEMENT_MODE_MANUAL
+enum si_movement_mode
+{
+	SI_MOVEMENT_MODE_ENEMY,
+	SI_MOVEMENT_MODE_PLAYER,
+	SI_MOVEMENT_MODE_BULLET
+};
 };
 
 struct si_sprite
@@ -35,9 +40,23 @@ struct si_sprite
 	int index;
 };
 
+struct si_boundary
+{
+	int x_min;
+	int x_max;
+	int y_min;
+	int y_max;
+};
+
+struct si_position
+{
+	struct si_boundary * boundary;
+	int x;
+	int y;
+};
 struct si_enemy
 {
-	struct si_sprite* sprite;
+	struct si_position * position;
 	// TODO bullet
 };
 
@@ -45,7 +64,6 @@ struct si_movement
 {
 	enum si_direction direction;
 	enum si_movement_mode mode;
-	int offset;
 	int step;
 };
 
@@ -56,11 +74,13 @@ struct si_player
 
 	// dynamic
 	struct si_movement * movement;
+	struct si_position * position;
 };
 
 struct si_enemy_group
 {
-	struct si_enemy * enemy;
+	struct si_sprite* sprite;
+	struct si_enemy ** enemies;
 	int count;
 	int formation_width;
 	int full_width;
@@ -71,9 +91,8 @@ struct si_enemy_group
 
 struct si_level
 {
-	struct si_enemy_group* groups;
+	struct si_enemy_group* enemy_groups;
 	int group_count;
-
 };
 
 struct si_game
@@ -86,11 +105,14 @@ struct si_game
 };
 
 struct si_game * si_init(Screen * screen);
+
 void si_update(Screen * screen, struct si_game * game);
+
+void si_update_position(struct si_movement * movement, struct si_position * position);
+void si_update_sprite(struct si_sprite * sprite);
+
 void si_render(Screen * screen, struct si_game * game);
 
-void si_update_movement(struct si_movement * movement, int max_offset);
-void si_update_sprite(struct si_sprite * sprite);
 void si_render_sprite(struct si_sprite * sprite, int x, int y);
 
 #endif /* APPLICATION_USER_GAMES_SPACEINVADERS_SPACE_INVADERS_H_ */
