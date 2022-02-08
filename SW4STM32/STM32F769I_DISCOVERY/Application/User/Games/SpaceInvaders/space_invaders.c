@@ -197,17 +197,6 @@ struct si_enemy * si_generate_enemies(Screen * screen, struct si_enemy_group * e
 
 void si_update(Screen * screen, struct si_game * game)
 {
-	// handle input TODO refactor
-	int left_down = HAL_GPIO_ReadPin(GPIOJ, GPIO_PIN_0);
-	int right_down = HAL_GPIO_ReadPin(GPIOJ, GPIO_PIN_1);
-
-	if (left_down)
-		game->player.movement.direction = SI_DIRECTION_LEFT;
-	else if (right_down)
-		game->player.movement.direction = SI_DIRECTION_RIGHT;
-	else
-		game->player.movement.direction = SI_DIRECTION_NONE;
-
 	// update level
 	struct si_level *curr_level = &game->curr_level;
 

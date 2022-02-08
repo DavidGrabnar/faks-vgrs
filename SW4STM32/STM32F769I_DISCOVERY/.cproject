@@ -116,6 +116,8 @@
                                     <listOptionValue builtIn="false" value="&quot;D:\Faks\S5\VGRS\STM\FreeRTOS_Timers\SW4STM32\STM32F769I_DISCOVERY\Application\User\SwapChain&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;D:\Faks\S5\VGRS\STM\FreeRTOS_Timers\SW4STM32\STM32F769I_DISCOVERY\Application\User\Games\SpaceInvaders&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;D:\Faks\S5\VGRS\STM\FreeRTOS_Timers\SW4STM32\STM32F769I_DISCOVERY\Application\User\Joystick&quot;"/>
                                     								
                                 </option>
                                 								

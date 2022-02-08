@@ -37,6 +37,8 @@ Screen *screen;
 struct si_game * game;
 osThreadId_t GameUpdateTaskHandle;
 
+struct joystick_state state;
+
 /* Private function prototypes -----------------------------------------------*/
 static void MPU_Config(void);
 void osTimerCallback(void *argument);
@@ -96,6 +98,10 @@ int main(void)
   screen = sc_screen_init();
   game = si_init(screen);
   while (screen == NULL);
+
+  int joystick_err = joystick_init();
+  while (joystick_err);
+
 
   /*
   uint8_t strptr[] = "   Hello world";
@@ -174,6 +180,7 @@ void LedGreenTask(void *argument)
   {
 	BSP_LED_Toggle(LED_GREEN);
     osDelay(1000);
+    //joystick_read(&state); // osDelay problem again ... delay hangs
   }
 
 }
@@ -183,7 +190,17 @@ void GameUpdateTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	  // TODO move input handling to another task, when osDelay starts working :/
 	sc_screen_swap_buffers(screen);
+	HAL_Delay(10);
+    joystick_read(&state);
+    if (state.x < 1024) {
+    	game->player.movement.direction = SI_DIRECTION_LEFT;
+    } else if (state.x > 3072) {
+    	game->player.movement.direction = SI_DIRECTION_RIGHT;
+    } else {
+    	game->player.movement.direction = SI_DIRECTION_NONE;
+    }
 	HAL_Delay(10);
 	si_update(screen, game);
 	HAL_Delay(10);

@@ -31,6 +31,7 @@ extern "C" {
 #include "stm32f769i_discovery_lcd.h"
 #include "swap_chain.h"
 #include "space_invaders.h"
+#include "joystick.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
