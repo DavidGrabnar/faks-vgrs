@@ -58,14 +58,14 @@ struct si_boundary
 
 struct si_position
 {
-	struct si_boundary * boundary;
+	struct si_boundary boundary;
 	int x;
 	int y;
 };
 
 struct si_bullet
 {
-	struct si_position * position;
+	struct si_position position;
 };
 
 struct si_weapon
@@ -76,12 +76,19 @@ struct si_weapon
 	int cycles;
 };
 
+struct si_movement
+{
+	enum si_direction direction;
+	enum si_movement_mode mode;
+	int step;
+};
+
 struct si_bullet_group
 {
-	struct si_sprite * sprite;
+	struct si_sprite sprite;
+	struct si_movement movement;
 	enum si_bullet_target target;
 	int capacity;
-	struct si_movement * movement;
 
 	// dynamic
 	struct si_bullet * bullets;
@@ -90,62 +97,63 @@ struct si_bullet_group
 
 struct si_enemy
 {
-	struct si_position * position;
+	struct si_position position;
 	// TODO bullet
 
 	int health;
 };
 
-struct si_movement
-{
-	enum si_direction direction;
-	enum si_movement_mode mode;
-	int step;
-};
-
 struct si_player
 {
-	struct si_sprite* sprite;
-	struct si_weapon* weapon;
-	struct si_bullet_group* bullet_group;
+	struct si_sprite sprite;
+	struct si_weapon weapon;
+	struct si_bullet_group bullet_group;
 
 	// dynamic
-	struct si_movement * movement;
-	struct si_position * position;
+	struct si_movement movement;
+	struct si_position position;
 };
 
 struct si_enemy_group
 {
-	struct si_sprite* sprite;
-	struct si_enemy ** enemies;
+	struct si_sprite sprite;
+	struct si_enemy * enemies;
 	int count;
 	int formation_width;
 	int full_width;
 
 	// dynamic
-	struct si_movement * movement;
+	struct si_movement movement;
 };
 
 struct si_level
 {
-	struct si_enemy_group* enemy_groups;
+	struct si_enemy_group * enemy_groups;
 	int group_count;
-	int score;
-	uint32_t time_start;
+
+	int enemy_alive_count;
 };
 
 struct si_game
 {
 	struct si_level * levels;
-	struct si_player * player;
+	struct si_player player;
 	int level_count;
 	int header_height;
 	int header_text_height;
 	int header_text_width;
+	int player_height;
 	int tick_duration; // [ms]
+
+	// dynamic
+	struct si_level curr_level;
+	int curr_level_index;
+	int score;
+	uint32_t time_start;
 };
 
 struct si_game * si_init(Screen * screen);
+struct si_enemy * si_generate_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y);
 
 void si_update(Screen * screen, struct si_game * game);
 
@@ -155,5 +163,7 @@ void si_update_sprite(struct si_sprite * sprite);
 void si_render(Screen * screen, struct si_game * game);
 
 void si_render_sprite(struct si_sprite * sprite, int x, int y);
+
+void si_restart_level(Screen * screen, struct si_game * game);
 
 #endif /* APPLICATION_USER_GAMES_SPACEINVADERS_SPACE_INVADERS_H_ */
