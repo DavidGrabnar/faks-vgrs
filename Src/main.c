@@ -201,6 +201,7 @@ void GameUpdateTask(void *argument)
     } else {
     	game->player.movement.direction = SI_DIRECTION_NONE;
     }
+    game->player.weapon.triggering = state.y < 1024;
 	HAL_Delay(10);
 	si_update(screen, game);
 	HAL_Delay(10);

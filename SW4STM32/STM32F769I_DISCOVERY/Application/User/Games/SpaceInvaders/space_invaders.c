@@ -64,6 +64,7 @@ struct si_game * si_init(Screen * screen)
 	struct si_weapon * si_weapon_player = &game->player.weapon;
 	si_weapon_player->per_cycles = 5;
 	si_weapon_player->cycles = 0;
+	si_weapon_player->triggering = 0;
 
 	struct si_bullet_group * si_bullet_group = &game->player.bullet_group;
 
@@ -101,7 +102,7 @@ struct si_game * si_init(Screen * screen)
 	struct si_movement * si_bullet_movement = &game->player.bullet_group.movement;
 	si_bullet_movement->direction = SI_DIRECTION_UP;
 	si_bullet_movement->mode = SI_MOVEMENT_MODE_BULLET;
-	si_bullet_movement->step = 20;
+	si_bullet_movement->step = 50;
 
 	si_bullet_group->target = SI_BULLET_TARGET_ENEMY;
 	si_bullet_group->capacity = SI_BULLET_MAX_COUNT;
@@ -277,8 +278,10 @@ void si_update(Screen * screen, struct si_game * game)
 	}
 
 	// add new bullets
-	game->player.weapon.cycles++;
-	if (game->player.weapon.cycles >= game->player.weapon.per_cycles) {
+	if (game->player.weapon.cycles < game->player.weapon.per_cycles) {
+		game->player.weapon.cycles++;
+	}
+	else if (game->player.weapon.triggering) {
 		if (game->player.bullet_group.count >= game->player.bullet_group.capacity) {
 			// TODO ERROR cannot spawn more bullets
 		} else {

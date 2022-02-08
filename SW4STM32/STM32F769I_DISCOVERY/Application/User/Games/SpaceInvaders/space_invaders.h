@@ -74,6 +74,7 @@ struct si_weapon
 
 	// dynamic
 	int cycles;
+	int triggering;
 };
 
 struct si_movement
