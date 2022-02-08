@@ -56,9 +56,64 @@ struct si_game * si_init(Screen * screen)
 
 	si_position_player->boundary = si_boundary_player;
 
+	struct si_weapon * si_weapon_player = (struct si_weapon *) malloc(sizeof(struct si_weapon));
+	si_weapon_player->per_cycles = 5;
+	si_weapon_player->cycles = 0;
+
+	struct si_bullet_group * si_bullet_group = (struct si_bullet_group *) malloc(sizeof(struct si_bullet_group));
+
+	uint8_t ** bitmaps_bullet = (uint8_t **) calloc(1, sizeof(uint8_t *));
+	uint8_t * bitmap_bullet = (uint8_t *) malloc(sizeof(SI_BULLET_BITMAP));
+	memcpy(bitmap_bullet, SI_BULLET_BITMAP, sizeof(SI_BULLET_BITMAP));
+	bitmaps_bullet[0] = bitmap_bullet;
+
+	struct si_sprite * si_bullet_sprite = (struct si_sprite *) malloc(sizeof(struct si_sprite));
+
+	si_bullet_sprite->width = SI_BULLET_WIDTH;
+	si_bullet_sprite->length = SI_BULLET_LENGTH;
+	si_bullet_sprite->scale = SI_BULLET_SCALE;
+	si_bullet_sprite->count = SI_BULLET_BITMAP_COUNT;
+	si_bullet_sprite->bitmaps = bitmaps_bullet;
+	si_bullet_sprite->index = 0;
+
+	struct si_bullet * si_bullets = (struct si_bullet *) calloc(SI_BULLET_MAX_COUNT, sizeof(struct si_bullet));
+
+	for (int bullet_index = 0; bullet_index < SI_BULLET_MAX_COUNT; bullet_index++) {
+		struct si_bullet * bullet = &si_bullets[bullet_index];
+		struct si_position * si_position = (struct si_position *) malloc(sizeof(struct si_position));
+
+		si_position->x = 0;
+		si_position->y = 0;
+
+
+		struct si_boundary * si_boundary = (struct si_boundary *) malloc(sizeof(struct si_boundary));
+		si_boundary->x_min = 0;
+		si_boundary->x_max = 0;
+		si_boundary->y_min = 0;
+		si_boundary->y_max = 0;
+
+		si_position->boundary = si_boundary;
+
+		bullet->position = si_position;
+	}
+
+	struct si_movement * si_bullet_movement = (struct si_movement *) malloc(sizeof(struct si_movement));
+	si_bullet_movement->direction = SI_DIRECTION_UP;
+	si_bullet_movement->mode = SI_MOVEMENT_MODE_BULLET;
+	si_bullet_movement->step = 20;
+
+	si_bullet_group->sprite = si_bullet_sprite;
+	si_bullet_group->movement = si_bullet_movement;
+	si_bullet_group->target = SI_BULLET_TARGET_ENEMY;
+	si_bullet_group->capacity = SI_BULLET_MAX_COUNT;
+	si_bullet_group->bullets = si_bullets;
+	si_bullet_group->count = 0;
+
 	si_player->sprite = si_player_sprite;
 	si_player->movement = si_movement_player;
 	si_player->position = si_position_player;
+	si_player->weapon = si_weapon_player;
+	si_player->bullet_group = si_bullet_group;
 
 	game->player = si_player;
 
@@ -135,6 +190,7 @@ struct si_game * si_init(Screen * screen)
 
 				struct si_enemy * si_enemy = (struct si_enemy *) malloc(sizeof(struct si_enemy));
 				si_enemy->position = si_position;
+				si_enemy->health = 1;
 				si_enemies1[index++] = si_enemy;
 
 				enemy_pos_x += si_enemy_sprite->width * si_enemy_sprite->scale;
@@ -173,6 +229,9 @@ void si_update(Screen * screen, struct si_game * game)
 
 		for (int enemy_index = 0; enemy_index < curr_group->count; enemy_index++) {
 			struct si_enemy * curr_enemy = curr_group->enemies[enemy_index];
+			if (curr_enemy->health == 0) {
+				continue;
+			}
 			si_update_position(curr_group->movement, curr_enemy->position);
 		}
 		si_update_sprite(curr_group->sprite);
@@ -180,6 +239,68 @@ void si_update(Screen * screen, struct si_game * game)
 
 	si_update_position(game->player->movement, game->player->position);
 	si_update_sprite(game->player->sprite);
+
+	// update bullets
+	for (int bullet_index = 0; bullet_index < game->player->bullet_group->count; bullet_index++) {
+		struct si_bullet * bullet = &game->player->bullet_group->bullets[bullet_index];
+		si_update_position(game->player->bullet_group->movement, bullet->position);
+
+		if (bullet->position->y == bullet->position->boundary->y_min) {
+			// remove bullet, move last to current index to avoid blanks
+			memcpy(&game->player->bullet_group->bullets[bullet_index], &game->player->bullet_group->bullets[game->player->bullet_group->count--], sizeof(struct si_bullet));
+		} else {
+			int hit = 0;
+			// AABB collision detection with enemies
+			for (int enemy_group_index = curr_level->group_count - 1; enemy_group_index >= 0; enemy_group_index--) {
+				struct si_enemy_group *curr_group = &curr_level->enemy_groups[enemy_group_index];
+
+				for (int enemy_index = curr_group->count - 1; enemy_index >= 0; enemy_index--) {
+					struct si_enemy * curr_enemy = curr_group->enemies[enemy_index];
+					if (curr_enemy->health == 0) {
+						continue;
+					}
+					if (
+						bullet->position->x < curr_enemy->position->x + curr_group->sprite->width * curr_group->sprite->scale
+						&& bullet->position->x + game->player->bullet_group->sprite->width * game->player->bullet_group->sprite->scale > curr_enemy->position->x
+						&& bullet->position->y < curr_enemy->position->y + (curr_group->sprite->length / curr_group->sprite->width) * curr_group->sprite->scale
+						&& bullet->position->y + game->player->bullet_group->sprite->width * game->player->bullet_group->sprite->scale > curr_enemy->position->y
+					) {
+						// remove bullet and hide enemy
+						memcpy(&game->player->bullet_group->bullets[bullet_index], &game->player->bullet_group->bullets[game->player->bullet_group->count--], sizeof(struct si_bullet));
+						curr_enemy->health = 0;
+						hit = 1;
+						break;
+					}
+				}
+				if (hit) {
+					break;
+				}
+			}
+		}
+	}
+
+	// add new bullets
+	game->player->weapon->cycles++;
+	if (game->player->weapon->cycles >= game->player->weapon->per_cycles) {
+		if (game->player->bullet_group->count >= game->player->bullet_group->capacity) {
+			// TODO ERROR cannot spawn more bullets
+		} else {
+			struct si_bullet * bullet = &game->player->bullet_group->bullets[game->player->bullet_group->count++];
+
+			bullet->position->x = game->player->position->x
+					+ game->player->sprite->width * game->player->sprite->scale / 2
+					- game->player->bullet_group->sprite->width * game->player->bullet_group->sprite->scale / 2;
+
+			bullet->position->y = game->player->position->y
+					 - (game->player->bullet_group->sprite->length / game->player->bullet_group->sprite->width) * game->player->bullet_group->sprite->scale;
+
+			bullet->position->boundary->x_min = bullet->position->x;
+			bullet->position->boundary->x_max = bullet->position->x;
+			bullet->position->boundary->y_min = game->header_height;
+			bullet->position->boundary->y_max = bullet->position->y;
+		}
+		game->player->weapon->cycles = 0;
+	}
 }
 
 void si_update_position(struct si_movement * movement, struct si_position * position)
@@ -187,9 +308,9 @@ void si_update_position(struct si_movement * movement, struct si_position * posi
 	if (movement->direction == SI_DIRECTION_NONE) return;
 
 	int curr_step = movement->step * movement->direction;
-	position->x += curr_step;
 
 	if (movement->mode == SI_MOVEMENT_MODE_ENEMY) {
+		position->x += curr_step;
 		if (position->x < position->boundary->x_min) {
 			position->x = position->boundary->x_min + (position->boundary->x_min - position->x);
 			movement->direction *= -1;
@@ -199,10 +320,18 @@ void si_update_position(struct si_movement * movement, struct si_position * posi
 			movement->direction *= -1;
 		}
 	} else if (movement->mode == SI_MOVEMENT_MODE_PLAYER) {
+		position->x += curr_step;
 		if (position->x < position->boundary->x_min) {
 			position->x = position->boundary->x_min;
 		} else if (position->x > position->boundary->x_max) {
 			position->x = position->boundary->x_max;
+		}
+	} else if (movement->mode == SI_MOVEMENT_MODE_BULLET) {
+		position->y += curr_step;
+		if (position->y < position->boundary->y_min) {
+			position->y = position->boundary->y_min;
+		} else if (position->y > position->boundary->y_max) {
+			position->y = position->boundary->y_max;
 		}
 	} else {
 
@@ -234,6 +363,9 @@ void si_render(Screen * screen, struct si_game * game)
 
 		for (int enemy_index = 0; enemy_index < curr_group->count; enemy_index++) {
 			struct si_enemy * curr_enemy = curr_group->enemies[enemy_index];
+			if (curr_enemy->health == 0) {
+				continue;
+			}
 			si_render_sprite(curr_sprite, curr_enemy->position->x, curr_enemy->position->y);
 		}
 	}
@@ -243,6 +375,10 @@ void si_render(Screen * screen, struct si_game * game)
 	struct si_sprite * sprite = player->sprite;
 
 	si_render_sprite(sprite, player->position->x, player->position->y);
+	for (int bullet_index = 0; bullet_index < player->bullet_group->count; bullet_index++) {
+		struct si_bullet * bullet = &player->bullet_group->bullets[bullet_index];
+		si_render_sprite(player->bullet_group->sprite, bullet->position->x, bullet->position->y);
+	}
 }
 
 void si_render_sprite(struct si_sprite * sprite, int x, int y)

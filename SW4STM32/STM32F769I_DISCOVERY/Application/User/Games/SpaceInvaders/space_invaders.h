@@ -11,12 +11,15 @@
 #include "swap_chain.h"
 #include "stm32f769i_discovery_lcd.h"
 
+#define SI_BULLET_MAX_COUNT 32 // fixed array length for bullets per entity
 
 enum si_direction
 {
 	SI_DIRECTION_LEFT = -1,
+	SI_DIRECTION_UP = -1,
 	SI_DIRECTION_NONE = 0,
-	SI_DIRECTION_RIGHT = 1
+	SI_DIRECTION_RIGHT = 1,
+	SI_DIRECTION_DOWN = 1
 };
 
 enum si_movement_mode
@@ -25,6 +28,11 @@ enum si_movement_mode
 	SI_MOVEMENT_MODE_PLAYER,
 	SI_MOVEMENT_MODE_BULLET
 };
+
+enum si_bullet_target
+{
+	SI_BULLET_TARGET_ENEMY,
+	SI_BULLET_TARGET_PLAYER
 };
 
 struct si_sprite
@@ -54,10 +62,38 @@ struct si_position
 	int x;
 	int y;
 };
+
+struct si_bullet
+{
+	struct si_position * position;
+};
+
+struct si_weapon
+{
+	int per_cycles; // how many cycles until shot ready
+
+	// dynamic
+	int cycles;
+};
+
+struct si_bullet_group
+{
+	struct si_sprite * sprite;
+	enum si_bullet_target target;
+	int capacity;
+	struct si_movement * movement;
+
+	// dynamic
+	struct si_bullet * bullets;
+	int count;
+};
+
 struct si_enemy
 {
 	struct si_position * position;
 	// TODO bullet
+
+	int health;
 };
 
 struct si_movement
@@ -70,7 +106,8 @@ struct si_movement
 struct si_player
 {
 	struct si_sprite* sprite;
-	// TODO bullet
+	struct si_weapon* weapon;
+	struct si_bullet_group* bullet_group;
 
 	// dynamic
 	struct si_movement * movement;
