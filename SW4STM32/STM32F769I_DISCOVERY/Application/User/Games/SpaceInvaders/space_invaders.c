@@ -16,8 +16,8 @@ struct si_game * si_init(Screen * screen)
 	struct si_game * game = (struct si_game *) malloc(sizeof(struct si_game));
 
 	game->level_count = 1;
-	game->header_height = 100;
-	game->header_text_height = game->header_height * 0.8;
+	game->header_height = 32;
+	game->header_text_height = 24;
 	game->header_text_width = screen->width * 0.9;
 	game->tick_duration = 100;
 
@@ -229,26 +229,33 @@ void si_update(Screen * screen, struct si_game * game)
 	// update level
 	struct si_level *curr_level = &game->levels[0];
 
+	int shift = -1;
 	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
 		struct si_enemy_group *curr_group = &curr_level->enemy_groups[enemy_group_index];
-
+		int wrap = 0;
 		for (int enemy_index = 0; enemy_index < curr_group->count; enemy_index++) {
 			struct si_enemy * curr_enemy = curr_group->enemies[enemy_index];
 			if (curr_enemy->health == 0) {
 				continue;
 			}
-			si_update_position(curr_group->movement, curr_enemy->position);
+			wrap = si_update_position(curr_group->movement, curr_enemy->position, shift);
+			if (enemy_group_index == 0 && shift == -1) {
+				shift = wrap;
+			}
+		}
+		if (wrap) {
+			curr_group->movement->direction *= -1;
 		}
 		si_update_sprite(curr_group->sprite);
 	}
 
-	si_update_position(game->player->movement, game->player->position);
+	si_update_position(game->player->movement, game->player->position, 0);
 	si_update_sprite(game->player->sprite);
 
 	// update bullets
 	for (int bullet_index = 0; bullet_index < game->player->bullet_group->count; bullet_index++) {
 		struct si_bullet * bullet = &game->player->bullet_group->bullets[bullet_index];
-		si_update_position(game->player->bullet_group->movement, bullet->position);
+		si_update_position(game->player->bullet_group->movement, bullet->position, 0);
 
 		if (bullet->position->y == bullet->position->boundary->y_min) {
 			// remove bullet, move last to current index to avoid blanks
@@ -309,39 +316,51 @@ void si_update(Screen * screen, struct si_game * game)
 	}
 }
 
-void si_update_position(struct si_movement * movement, struct si_position * position)
+int si_update_position(struct si_movement * movement, struct si_position * position, int shift)
 {
-	if (movement->direction == SI_DIRECTION_NONE) return;
+	if (movement->direction == SI_DIRECTION_NONE) return 0;
 
+	int wrap = 0;
 	int curr_step = movement->step * movement->direction;
 
 	if (movement->mode == SI_MOVEMENT_MODE_ENEMY) {
 		position->x += curr_step;
 		if (position->x < position->boundary->x_min) {
 			position->x = position->boundary->x_min + (position->boundary->x_min - position->x);
-			movement->direction *= -1;
-
+			if (shift == -1 || shift == 1) {
+				position->y += movement->step;
+			}
+			wrap = 1;
 		} else if (position->x > position->boundary->x_max) {
 			position->x = position->boundary->x_max - (position->x - position->boundary->x_max);
-			movement->direction *= -1;
+			if (shift == -1 || shift == 1) {
+				position->y += movement->step;
+			}
+			wrap = 1;
 		}
 	} else if (movement->mode == SI_MOVEMENT_MODE_PLAYER) {
 		position->x += curr_step;
 		if (position->x < position->boundary->x_min) {
 			position->x = position->boundary->x_min;
+			wrap = 1;
 		} else if (position->x > position->boundary->x_max) {
 			position->x = position->boundary->x_max;
+			wrap = 1;
 		}
 	} else if (movement->mode == SI_MOVEMENT_MODE_BULLET) {
 		position->y += curr_step;
 		if (position->y < position->boundary->y_min) {
 			position->y = position->boundary->y_min;
+			wrap = 1;
 		} else if (position->y > position->boundary->y_max) {
 			position->y = position->boundary->y_max;
+			wrap = 1;
 		}
 	} else {
 
 	}
+
+	return wrap;
 }
 
 void si_update_sprite(struct si_sprite * sprite)
@@ -406,6 +425,9 @@ void si_render(Screen * screen, struct si_game * game)
 	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
 	sprintf(buffer, "%2d", 1);
 	BSP_LCD_DisplayStringAt(screen->width - (screen->width - game->header_text_width), (game->header_height - game->header_text_height) / 2, buffer, LEFT_MODE);
+
+	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+	BSP_LCD_DrawHLine(0, game->header_height, screen->width);
 
 }
 

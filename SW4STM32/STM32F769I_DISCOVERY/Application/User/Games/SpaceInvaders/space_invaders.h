@@ -149,7 +149,7 @@ struct si_game * si_init(Screen * screen);
 
 void si_update(Screen * screen, struct si_game * game);
 
-void si_update_position(struct si_movement * movement, struct si_position * position);
+int si_update_position(struct si_movement * movement, struct si_position * position, int shift);
 void si_update_sprite(struct si_sprite * sprite);
 
 void si_render(Screen * screen, struct si_game * game);
