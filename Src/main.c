@@ -184,9 +184,12 @@ void GameUpdateTask(void *argument)
   for(;;)
   {
 	sc_screen_swap_buffers(screen);
+	HAL_Delay(10);
 	si_update(screen, game);
+	HAL_Delay(10);
 	si_render(screen, game);
-    osDelay(game->tick_duration);
+	HAL_Delay(game->tick_duration - 20);
+    //osDelay(game->tick_duration);
   }
 
 }
