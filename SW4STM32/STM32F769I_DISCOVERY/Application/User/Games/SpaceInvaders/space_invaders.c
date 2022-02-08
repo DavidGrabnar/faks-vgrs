@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "space_invaders.h"
 #include "assets.h"
 
@@ -16,11 +17,15 @@ struct si_game * si_init(Screen * screen)
 
 	game->level_count = 1;
 	game->header_height = 100;
+	game->header_text_height = game->header_height * 0.8;
+	game->header_text_width = screen->width * 0.9;
 	game->tick_duration = 100;
 
 	struct si_level * si_level1 = (struct si_level *) malloc(sizeof(struct si_level));
 
 	si_level1->group_count = 2;
+	si_level1->score = 0;
+	si_level1->time_start = HAL_GetTick();
 
 	// player
 	uint8_t ** bitmaps_player = (uint8_t **) calloc(1, sizeof(uint8_t *));
@@ -268,6 +273,7 @@ void si_update(Screen * screen, struct si_game * game)
 						// remove bullet and hide enemy
 						memcpy(&game->player->bullet_group->bullets[bullet_index], &game->player->bullet_group->bullets[game->player->bullet_group->count--], sizeof(struct si_bullet));
 						curr_enemy->health = 0;
+						curr_level->score++;
 						hit = 1;
 						break;
 					}
@@ -350,9 +356,6 @@ void si_render(Screen * screen, struct si_game * game)
 	//render game
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
 
-	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-	BSP_LCD_FillRect(0, 0, screen->width, game->header_height);
-
 	//render level
 	struct si_level *curr_level = &game->levels[0];
 
@@ -370,7 +373,7 @@ void si_render(Screen * screen, struct si_game * game)
 		}
 	}
 
-	// render player
+	// render player & player's bullets
 	struct si_player * player = game->player;
 	struct si_sprite * sprite = player->sprite;
 
@@ -379,6 +382,31 @@ void si_render(Screen * screen, struct si_game * game)
 		struct si_bullet * bullet = &player->bullet_group->bullets[bullet_index];
 		si_render_sprite(player->bullet_group->sprite, bullet->position->x, bullet->position->y);
 	}
+
+	// render header
+
+	unsigned char buffer[128];
+	BSP_LCD_SetFont(&Font24);
+
+	BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
+	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+	BSP_LCD_DisplayStringAt((screen->width - game->header_text_width) / 2, (game->header_height - game->header_text_height) / 2, "Score: ", LEFT_MODE);
+	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+	sprintf(buffer, "%5d", curr_level->score);
+	BSP_LCD_DisplayStringAt((screen->width - game->header_text_width) / 2 + 100, (game->header_height - game->header_text_height) / 2, buffer, LEFT_MODE);
+
+	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+	BSP_LCD_DisplayStringAt(screen->width / 2 - 100, (game->header_height - game->header_text_height) / 2, "Time: ", LEFT_MODE);
+	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+	sprintf(buffer, "%5d", (HAL_GetTick() - curr_level->time_start) / 1000);
+	BSP_LCD_DisplayStringAt(screen->width / 2, (game->header_height - game->header_text_height) / 2, buffer, LEFT_MODE);
+
+	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+	BSP_LCD_DisplayStringAt(screen->width - (screen->width - game->header_text_width) - 100, (game->header_height - game->header_text_height) / 2, "Lives: ", LEFT_MODE);
+	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+	sprintf(buffer, "%2d", 1);
+	BSP_LCD_DisplayStringAt(screen->width - (screen->width - game->header_text_width), (game->header_height - game->header_text_height) / 2, buffer, LEFT_MODE);
+
 }
 
 void si_render_sprite(struct si_sprite * sprite, int x, int y)

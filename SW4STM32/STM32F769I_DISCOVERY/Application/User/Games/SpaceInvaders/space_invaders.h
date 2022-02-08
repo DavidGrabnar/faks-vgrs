@@ -130,6 +130,8 @@ struct si_level
 {
 	struct si_enemy_group* enemy_groups;
 	int group_count;
+	int score;
+	uint32_t time_start;
 };
 
 struct si_game
@@ -138,6 +140,8 @@ struct si_game
 	struct si_player * player;
 	int level_count;
 	int header_height;
+	int header_text_height;
+	int header_text_width;
 	int tick_duration; // [ms]
 };
 
