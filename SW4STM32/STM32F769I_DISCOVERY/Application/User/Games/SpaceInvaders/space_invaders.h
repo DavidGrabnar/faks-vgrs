@@ -10,6 +10,7 @@
 
 #include "swap_chain.h"
 #include "stm32f769i_discovery_lcd.h"
+#include "joystick.h"
 
 #define SI_BULLET_MAX_COUNT 32 // fixed array length for bullets per entity
 
@@ -155,6 +156,8 @@ struct si_game
 
 struct si_game * si_init(Screen * screen);
 struct si_enemy * si_generate_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y);
+
+void si_handle_input(Screen * screen, struct si_game * game, struct joystick_state * state);
 
 void si_update(Screen * screen, struct si_game * game);
 

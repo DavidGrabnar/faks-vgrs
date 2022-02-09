@@ -194,14 +194,7 @@ void GameUpdateTask(void *argument)
 	sc_screen_swap_buffers(screen);
 	HAL_Delay(10);
     joystick_read(&state);
-    if (state.x < 1024) {
-    	game->player.movement.direction = SI_DIRECTION_LEFT;
-    } else if (state.x > 3072) {
-    	game->player.movement.direction = SI_DIRECTION_RIGHT;
-    } else {
-    	game->player.movement.direction = SI_DIRECTION_NONE;
-    }
-    game->player.weapon.triggering = state.y < 1024;
+    si_handle_input(screen, game, &state);
 	HAL_Delay(10);
 	si_update(screen, game);
 	HAL_Delay(10);

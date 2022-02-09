@@ -196,6 +196,31 @@ struct si_enemy * si_generate_enemies(Screen * screen, struct si_enemy_group * e
 	return enemies;
 }
 
+
+void si_handle_input(Screen * screen, struct si_game * game, struct joystick_state * state)
+{
+	/*if (game->curr_view == SI_VIEW_START) {
+		if (state->y < 1024) {
+			si_restart_level(screen, game);
+			game->curr_view = SI_VIEW_GAME;
+		}
+	} else if (game->curr_view == SI_VIEW_GAME) {*/
+		if (state->x < 1024) {
+			game->player.movement.direction = SI_DIRECTION_LEFT;
+		} else if (state->x > 3072) {
+			game->player.movement.direction = SI_DIRECTION_RIGHT;
+		} else {
+			game->player.movement.direction = SI_DIRECTION_NONE;
+		}
+		game->player.weapon.triggering = state->y < 1024;
+	/*} else if (game->curr_view == SI_VIEW_END) {
+		if (state->y < 1024) {
+			game->curr_view = SI_VIEW_START;
+		}
+	}*/
+
+}
+
 void si_update(Screen * screen, struct si_game * game)
 {
 	// update level
