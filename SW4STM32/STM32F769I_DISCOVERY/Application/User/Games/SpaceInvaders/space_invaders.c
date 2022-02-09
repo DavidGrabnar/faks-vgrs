@@ -343,6 +343,7 @@ void si_update(Screen * screen, struct si_game * game)
 			si_restart_level(screen, game);
 		} else {
 			game->won = 1;
+			game->time_end = HAL_GetTick();
 			game->curr_view = SI_GAME_VIEW_END;
 		}
 		return;
@@ -360,8 +361,8 @@ void si_update(Screen * screen, struct si_game * game)
 			if (curr_enemy->position.y + (curr_group->sprite.length / curr_group->sprite.width) * curr_group->sprite.scale > game->player_height) {
 				// RIP
 				game->won = 0;
-				game->curr_view = SI_GAME_VIEW_END;
 				game->time_end = HAL_GetTick();
+				game->curr_view = SI_GAME_VIEW_END;
 				return;
 			}
 		}
