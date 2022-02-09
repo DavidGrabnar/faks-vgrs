@@ -24,6 +24,9 @@ struct si_game * si_init(Screen * screen)
 
 	game->score = 0;
 	game->time_start = HAL_GetTick();
+	game->time_end = 0;
+	game->won = 0;
+	game->curr_view = SI_GAME_VIEW_START;
 
 	game->curr_level.enemy_groups = NULL;
 
@@ -153,7 +156,6 @@ struct si_game * si_init(Screen * screen)
 	game->levels = si_level1;
 
 	game->curr_level_index = 0;
-	si_restart_level(screen, game);
 
 	return game;
 }
@@ -199,12 +201,14 @@ struct si_enemy * si_generate_enemies(Screen * screen, struct si_enemy_group * e
 
 void si_handle_input(Screen * screen, struct si_game * game, struct joystick_state * state)
 {
-	/*if (game->curr_view == SI_VIEW_START) {
+	if (game->curr_view == SI_GAME_VIEW_START) {
 		if (state->y < 1024) {
+			game->curr_level_index = 0;
 			si_restart_level(screen, game);
-			game->curr_view = SI_VIEW_GAME;
+			si_restart_stats(game);
+			game->curr_view = SI_GAME_VIEW_GAME;
 		}
-	} else if (game->curr_view == SI_VIEW_GAME) {*/
+	} else if (game->curr_view == SI_GAME_VIEW_GAME) {
 		if (state->x < 1024) {
 			game->player.movement.direction = SI_DIRECTION_LEFT;
 		} else if (state->x > 3072) {
@@ -213,16 +217,20 @@ void si_handle_input(Screen * screen, struct si_game * game, struct joystick_sta
 			game->player.movement.direction = SI_DIRECTION_NONE;
 		}
 		game->player.weapon.triggering = state->y < 1024;
-	/*} else if (game->curr_view == SI_VIEW_END) {
-		if (state->y < 1024) {
-			game->curr_view = SI_VIEW_START;
+	} else if (game->curr_view == SI_GAME_VIEW_END) {
+		if (state->y > 3072) {
+			game->curr_view = SI_GAME_VIEW_START;
 		}
-	}*/
+	}
 
 }
 
 void si_update(Screen * screen, struct si_game * game)
 {
+	if (game->curr_view != SI_GAME_VIEW_GAME) {
+		return;
+	}
+
 	// update level
 	struct si_level *curr_level = &game->curr_level;
 
@@ -330,7 +338,13 @@ void si_update(Screen * screen, struct si_game * game)
 	// check if all enemies dead
 	if (curr_level->enemy_alive_count <= 0) {
 		// GG WP
-		si_restart_level(screen, game);
+		if (game->curr_level_index < game->level_count - 1) {
+			game->curr_level_index++;
+			si_restart_level(screen, game);
+		} else {
+			game->won = 1;
+			game->curr_view = SI_GAME_VIEW_END;
+		}
 		return;
 	}
 
@@ -345,12 +359,13 @@ void si_update(Screen * screen, struct si_game * game)
 			}
 			if (curr_enemy->position.y + (curr_group->sprite.length / curr_group->sprite.width) * curr_group->sprite.scale > game->player_height) {
 				// RIP
-				si_restart_level(screen, game);
+				game->won = 0;
+				game->curr_view = SI_GAME_VIEW_END;
+				game->time_end = HAL_GetTick();
 				return;
 			}
 		}
 	}
-
 }
 
 int si_update_position(struct si_movement * movement, struct si_position * position, int shift)
@@ -412,38 +427,58 @@ void si_render(Screen * screen, struct si_game * game)
 	//render game
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
 
-	//render level
-	struct si_level *curr_level = &game->curr_level;
+	if (game->curr_view == SI_GAME_VIEW_START) {
+		BSP_LCD_SetFont(&Font24);
+		BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
+		BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+		BSP_LCD_DisplayStringAt(0, screen->height / 2 - 64, "Welcome to SPACE INVADERS", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, screen->height / 2 - 32, "Move joystick left and right to move spaceship", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, screen->height / 2, "Move joystick up to shoot", CENTER_MODE);
+		BSP_LCD_DisplayStringAt(0, screen->height / 2 + 64, "Move joystick up to start", CENTER_MODE);
+	} else if (game->curr_view == SI_GAME_VIEW_GAME) {
+		//render level
+		struct si_level *curr_level = &game->curr_level;
 
-	// render enemies
-	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
-		struct si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
-		struct si_sprite * curr_sprite = &curr_group->sprite;
+		// render enemies
+		for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
+			struct si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
+			struct si_sprite * curr_sprite = &curr_group->sprite;
 
-		for (int enemy_index = 0; enemy_index < curr_group->count; enemy_index++) {
-			struct si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
-			if (curr_enemy->health == 0) {
-				continue;
+			for (int enemy_index = 0; enemy_index < curr_group->count; enemy_index++) {
+				struct si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
+				if (curr_enemy->health == 0) {
+					continue;
+				}
+				si_render_sprite(curr_sprite, curr_enemy->position.x, curr_enemy->position.y);
 			}
-			si_render_sprite(curr_sprite, curr_enemy->position.x, curr_enemy->position.y);
 		}
+
+		// render player & player's bullets
+		struct si_player * player = &game->player;
+		struct si_sprite * sprite = &player->sprite;
+
+		si_render_sprite(sprite, player->position.x, player->position.y);
+		for (int bullet_index = 0; bullet_index < player->bullet_group.count; bullet_index++) {
+			struct si_bullet * bullet = &player->bullet_group.bullets[bullet_index];
+			si_render_sprite(&player->bullet_group.sprite, bullet->position.x, bullet->position.y);
+		}
+
+		BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+		BSP_LCD_DrawHLine(0, game->player_height, screen->width);
+
+		si_render_header(screen, game);
+	} else if (game->curr_view == SI_GAME_VIEW_END) {
+		si_render_header(screen, game);
+		BSP_LCD_SetFont(&Font24);
+		BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
+		BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+		if (game->won) {
+			BSP_LCD_DisplayStringAt(0, screen->height / 2 - 64, "You won!", CENTER_MODE);
+		} else {
+			BSP_LCD_DisplayStringAt(0, screen->height / 2 - 64, "You lost!", CENTER_MODE);
+		}
+		BSP_LCD_DisplayStringAt(0, screen->height / 2, "Move joystick down to restart", CENTER_MODE);
 	}
-
-	// render player & player's bullets
-	struct si_player * player = &game->player;
-	struct si_sprite * sprite = &player->sprite;
-
-	si_render_sprite(sprite, player->position.x, player->position.y);
-	for (int bullet_index = 0; bullet_index < player->bullet_group.count; bullet_index++) {
-		struct si_bullet * bullet = &player->bullet_group.bullets[bullet_index];
-		si_render_sprite(&player->bullet_group.sprite, bullet->position.x, bullet->position.y);
-	}
-
-	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-	BSP_LCD_DrawHLine(0, game->player_height, screen->width);
-
-	si_render_header(screen, game);
-
 }
 
 void si_render_sprite(struct si_sprite * sprite, int x, int y)
@@ -485,10 +520,14 @@ void si_render_header(Screen * screen, struct si_game * game)
 	sprintf(buffer, "%3d", game->score);
 	BSP_LCD_DisplayStringAt((screen->width - game->header_text_width) / 2 + 280, (game->header_height - game->header_text_height) / 2, buffer, LEFT_MODE);
 
+	uint32_t time_end = game->time_end == 0
+			? HAL_GetTick()
+			: game->time_end;
+
 	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
 	BSP_LCD_DisplayStringAt(screen->width / 2 - 20, (game->header_height - game->header_text_height) / 2, "| Time: ", LEFT_MODE);
 	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-	sprintf(buffer, "%4d", (HAL_GetTick() - game->time_start) / 1000);
+	sprintf(buffer, "%4d", (time_end - game->time_start) / 1000);
 	BSP_LCD_DisplayStringAt(screen->width / 2 + 100, (game->header_height - game->header_text_height) / 2, buffer, LEFT_MODE);
 
 	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
@@ -561,4 +600,12 @@ void si_restart_level(Screen * screen, struct si_game * game)
 	}
 
 	new_level->enemy_alive_count = enemy_count;
+}
+
+void si_restart_stats(struct si_game * game)
+{
+	game->score = 0;
+	game->time_start = HAL_GetTick();
+	game->time_end = 0;
+	game->won = 0;
 }

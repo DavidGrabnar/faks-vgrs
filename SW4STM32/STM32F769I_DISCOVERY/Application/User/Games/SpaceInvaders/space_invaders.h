@@ -36,6 +36,13 @@ enum si_bullet_target
 	SI_BULLET_TARGET_PLAYER
 };
 
+enum si_game_view
+{
+	SI_GAME_VIEW_START,
+	SI_GAME_VIEW_GAME,
+	SI_GAME_VIEW_END
+};
+
 struct si_sprite
 {
 	// height = length / width
@@ -152,6 +159,9 @@ struct si_game
 	int curr_level_index;
 	int score;
 	uint32_t time_start;
+	uint32_t time_end;
+	enum si_game_view curr_view;
+	int won;
 };
 
 struct si_game * si_init(Screen * screen);
@@ -170,5 +180,6 @@ void si_render_sprite(struct si_sprite * sprite, int x, int y);
 void si_render_header(Screen * screen, struct si_game * game);
 
 void si_restart_level(Screen * screen, struct si_game * game);
+void si_restart_stats(struct si_game * game);
 
 #endif /* APPLICATION_USER_GAMES_SPACEINVADERS_SPACE_INVADERS_H_ */
