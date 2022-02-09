@@ -167,6 +167,7 @@ void si_update_sprite(struct si_sprite * sprite);
 void si_render(Screen * screen, struct si_game * game);
 
 void si_render_sprite(struct si_sprite * sprite, int x, int y);
+void si_render_header(Screen * screen, struct si_game * game);
 
 void si_restart_level(Screen * screen, struct si_game * game);
 

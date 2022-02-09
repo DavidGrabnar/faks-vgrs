@@ -439,7 +439,35 @@ void si_render(Screen * screen, struct si_game * game)
 		si_render_sprite(&player->bullet_group.sprite, bullet->position.x, bullet->position.y);
 	}
 
-	// render header
+	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+	BSP_LCD_DrawHLine(0, game->player_height, screen->width);
+
+	si_render_header(screen, game);
+
+}
+
+void si_render_sprite(struct si_sprite * sprite, int x, int y)
+{
+	uint8_t * bitmap = sprite->bitmaps[sprite->index];
+	int height = sprite->length / sprite->width;
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < sprite->width; j++) {
+			int bit_index = i * sprite->width + j;
+			int byte_index = bit_index / 8;
+			int bit_offset = bit_index % 8;
+
+			uint32_t color = bitmap[byte_index] & (1 << (7 - bit_offset))
+				? LCD_COLOR_WHITE
+				: LCD_COLOR_BLACK;
+
+			BSP_LCD_SetTextColor(color);
+			BSP_LCD_FillRect(x + j * sprite->scale, y + i * sprite->scale, sprite->scale, sprite->scale);
+		}
+	}
+}
+
+void si_render_header(Screen * screen, struct si_game * game)
+{
 
 	unsigned char buffer[128];
 	BSP_LCD_SetFont(&Font24);
@@ -471,30 +499,7 @@ void si_render(Screen * screen, struct si_game * game)
 
 	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
 	BSP_LCD_DrawHLine(0, game->header_height, screen->width);
-	BSP_LCD_DrawHLine(0, game->player_height, screen->width);
-
 }
-
-void si_render_sprite(struct si_sprite * sprite, int x, int y)
-{
-	uint8_t * bitmap = sprite->bitmaps[sprite->index];
-	int height = sprite->length / sprite->width;
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < sprite->width; j++) {
-			int bit_index = i * sprite->width + j;
-			int byte_index = bit_index / 8;
-			int bit_offset = bit_index % 8;
-
-			uint32_t color = bitmap[byte_index] & (1 << (7 - bit_offset))
-				? LCD_COLOR_WHITE
-				: LCD_COLOR_BLACK;
-
-			BSP_LCD_SetTextColor(color);
-			BSP_LCD_FillRect(x + j * sprite->scale, y + i * sprite->scale, sprite->scale, sprite->scale);
-		}
-	}
-}
-
 
 void si_restart_level(Screen * screen, struct si_game * game)
 {
