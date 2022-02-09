@@ -111,21 +111,17 @@ int main(void)
 
   osKernelInitialize();
 
-  /* Create Timer */
+/* RUNNING MULTIPLE TASKS CAUSES HARDFAULT
   idTimer1 = osTimerNew(osTimerCallback, osTimerPeriodic, NULL, NULL);
-  /* Start Timer */
   osTimerStart(idTimer1, 100);
 
-  /* Create LED Thread */
-  //osThreadDef(LEDThread, ToggleLEDsThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
-  //osThreadCreate(osThread(LEDThread), NULL);
   const osThreadAttr_t LedGreenTask_attributes = {
       .name = "GreenTask",
       .priority = (osPriority_t) osPriorityNormal,
       .stack_size = 256
     };
     LedGreenTaskHandle = osThreadNew(LedGreenTask, NULL, &LedGreenTask_attributes);
-
+*/
 	const osThreadAttr_t GameUpdateTask_attributes = {
 	  .name = "GameUpdateTask",
 	  .priority = (osPriority_t) osPriorityNormal,
@@ -189,16 +185,13 @@ void GameUpdateTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  // TODO move input handling to another task, when osDelay starts working :/
+	  // TODO move input handling to another task, when osDelay and task switching starts working :/
 	sc_screen_swap_buffers(screen);
-	HAL_Delay(10);
     joystick_read(&state);
     si_handle_input(screen, game, &state);
-	HAL_Delay(10);
 	si_update(screen, game);
-	HAL_Delay(10);
 	si_render(screen, game);
-	HAL_Delay(game->tick_duration - 20);
+	HAL_Delay(game->tick_duration);
     //osDelay(game->tick_duration);
   }
 
