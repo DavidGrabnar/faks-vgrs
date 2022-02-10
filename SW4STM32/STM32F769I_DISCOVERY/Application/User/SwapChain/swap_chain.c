@@ -10,10 +10,10 @@
 #include <stdlib.h>
 #include "swap_chain.h"
 
-void sc_screen_init(Screen * screen) {
+int sc_screen_init(Screen * screen) {
 	uint8_t lcd_status = BSP_LCD_Init();
 	if (lcd_status != LCD_OK)
-		return NULL;
+		return 1;
 
 	//Screen *screen = (Screen*) pvPortMalloc(sizeof(Screen));
 	screen->width = BSP_LCD_GetXSize();
@@ -26,7 +26,7 @@ void sc_screen_init(Screen * screen) {
 	BSP_LCD_SetLayerVisible(0, DISABLE);
 	BSP_LCD_SetLayerVisible(1, ENABLE);
 	BSP_LCD_SelectLayer(0);
-	return screen;
+	return 0;
 }
 
 void sc_screen_swap_buffers(Screen * screen) {

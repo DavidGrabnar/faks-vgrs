@@ -96,8 +96,8 @@ int main(void)
 
   /* Initialize the LCD */
   game = si_init(screen);
-  while (screen == NULL);
-  sc_screen_init(&screen);
+  int screen_error = sc_screen_init(&screen);
+  while (screen_error != 0);
 
   int joystick_err = joystick_init();
   while (joystick_err);
