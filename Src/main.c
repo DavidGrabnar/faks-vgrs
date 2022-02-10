@@ -186,13 +186,12 @@ void GameUpdateTask(void *argument)
   for(;;)
   {
 	  // TODO move input handling to another task, when osDelay and task switching starts working :/
-	sc_screen_swap_buffers(screen);
-    joystick_read(&state);
-    si_handle_input(screen, game, &state);
-	si_update(screen, game);
-	si_render(screen, game);
-	HAL_Delay(game->tick_duration);
-    //osDelay(game->tick_duration);
+	sc_screen_swap_buffers(&screen);
+	joystick_read(&state);
+    si_handle_input(&screen, &game, &state);
+	si_update(&screen, &game);
+	si_render(&screen, &game);
+    osDelay(game.tick_duration);
   }
 
 }
