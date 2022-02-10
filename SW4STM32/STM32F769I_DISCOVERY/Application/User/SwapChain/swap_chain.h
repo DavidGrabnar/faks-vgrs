@@ -19,10 +19,9 @@ typedef struct {
 	uint32_t front;
 } Screen;
 
-Screen* sc_screen_init();
-void sc_screen_swap_buffers(Screen *screen);
-uint32_t* sc_screen_backbuffer_ptr(Screen *screen);
-
-uint32_t sc_screen_backbuffer_id(Screen *screen);
+void sc_screen_init(Screen * screen);
+void sc_screen_swap_buffers(Screen * screen);
+uint32_t* sc_screen_backbuffer_ptr(Screen * screen);
+uint32_t sc_screen_backbuffer_id(Screen * screen);
 
 #endif /* APPLICATION_USER_SWAPCHAIN_SWAP_CHAIN_H_ */

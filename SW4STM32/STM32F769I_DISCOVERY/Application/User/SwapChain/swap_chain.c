@@ -10,12 +10,12 @@
 #include <stdlib.h>
 #include "swap_chain.h"
 
-Screen* sc_screen_init() {
+void sc_screen_init(Screen * screen) {
 	uint8_t lcd_status = BSP_LCD_Init();
 	if (lcd_status != LCD_OK)
 		return NULL;
 
-	Screen *screen = (Screen*) malloc(sizeof(Screen));
+	//Screen *screen = (Screen*) pvPortMalloc(sizeof(Screen));
 	screen->width = BSP_LCD_GetXSize();
 	screen->height = BSP_LCD_GetYSize();
 	screen->addr[0] = LCD_FB_START_ADDRESS;
@@ -29,7 +29,7 @@ Screen* sc_screen_init() {
 	return screen;
 }
 
-void sc_screen_swap_buffers(Screen *screen) {
+void sc_screen_swap_buffers(Screen * screen) {
 	// wait for VSYNC
 	while (!(LTDC->CDSR & LTDC_CDSR_VSYNCS));
 	BSP_LCD_SetLayerVisible(screen->front, DISABLE);
@@ -38,10 +38,10 @@ void sc_screen_swap_buffers(Screen *screen) {
 	BSP_LCD_SelectLayer(sc_screen_backbuffer_id(screen));
 }
 
-uint32_t* sc_screen_backbuffer_ptr(Screen *screen) {
+uint32_t* sc_screen_backbuffer_ptr(Screen * screen) {
 	return (uint32_t*)(screen->addr[ct_screen_backbuffer_id(screen)]);
 }
 
-uint32_t sc_screen_backbuffer_id(Screen *screen) {
+uint32_t sc_screen_backbuffer_id(Screen * screen) {
 	return 1 - screen->front;
 }
