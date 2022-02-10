@@ -164,7 +164,7 @@ struct si_game
 	int won;
 };
 
-struct si_game * si_init(Screen * screen);
+void si_init(Screen * screen, struct si_game * game);
 struct si_enemy * si_generate_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y);
 
 void si_handle_input(Screen * screen, struct si_game * game, struct joystick_state * state);

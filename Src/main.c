@@ -33,8 +33,8 @@ osThreadId_t LedGreenTaskHandle;
 osTimerId_t idTimer1;
 uint8_t lcd_status = LCD_OK;
 
-struct si_game * game;
 Screen screen;
+struct si_game game;
 osThreadId_t GameUpdateTaskHandle;
 
 struct joystick_state state;
@@ -95,9 +95,9 @@ int main(void)
 
 
   /* Initialize the LCD */
-  game = si_init(screen);
   int screen_error = sc_screen_init(&screen);
   while (screen_error != 0);
+  si_init(&screen, &game);
 
   int joystick_err = joystick_init();
   while (joystick_err);

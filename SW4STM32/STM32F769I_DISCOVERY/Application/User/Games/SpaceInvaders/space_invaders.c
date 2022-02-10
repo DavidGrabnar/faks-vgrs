@@ -11,10 +11,8 @@
 #include "assets.h"
 
 
-struct si_game * si_init(Screen * screen)
+void si_init(Screen * screen, struct si_game * game)
 {
-	struct si_game * game = (struct si_game *) malloc(sizeof(struct si_game));
-
 	game->level_count = 1;
 	game->header_height = 32;
 	game->header_text_height = 24;
