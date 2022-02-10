@@ -23,8 +23,6 @@ Screen* sc_screen_init();
 void sc_screen_swap_buffers(Screen *screen);
 uint32_t* sc_screen_backbuffer_ptr(Screen *screen);
 
-inline uint32_t sc_screen_backbuffer_id(Screen *screen) {
-	return 1 - screen->front;
-}
+uint32_t sc_screen_backbuffer_id(Screen *screen);
 
 #endif /* APPLICATION_USER_SWAPCHAIN_SWAP_CHAIN_H_ */

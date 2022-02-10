@@ -41,3 +41,7 @@ void sc_screen_swap_buffers(Screen *screen) {
 uint32_t* sc_screen_backbuffer_ptr(Screen *screen) {
 	return (uint32_t*)(screen->addr[ct_screen_backbuffer_id(screen)]);
 }
+
+uint32_t sc_screen_backbuffer_id(Screen *screen) {
+	return 1 - screen->front;
+}
