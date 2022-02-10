@@ -430,10 +430,14 @@ void si_render(Screen * screen, struct si_game * game)
 		BSP_LCD_SetFont(&Font24);
 		BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
 		BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-		BSP_LCD_DisplayStringAt(0, screen->height / 2 - 64, "Welcome to SPACE INVADERS", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, screen->height / 2 - 32, "Move joystick left and right to move spaceship", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, screen->height / 2, "Move joystick up to shoot", CENTER_MODE);
-		BSP_LCD_DisplayStringAt(0, screen->height / 2 + 64, "Move joystick up to start", CENTER_MODE);
+		uint8_t buffer1[] = "Welcome to SPACE INVADERS";
+		BSP_LCD_DisplayStringAt(0, screen->height / 2 - 64, buffer1, CENTER_MODE);
+		uint8_t buffer2[] = "Move joystick left and right to move spaceship";
+		BSP_LCD_DisplayStringAt(0, screen->height / 2 - 32, buffer2, CENTER_MODE);
+		uint8_t buffer3[] = "Move joystick up to shoot";
+		BSP_LCD_DisplayStringAt(0, screen->height / 2, buffer3, CENTER_MODE);
+		uint8_t buffer4[] = "Move joystick up to start";
+		BSP_LCD_DisplayStringAt(0, screen->height / 2 + 64, buffer4, CENTER_MODE);
 	} else if (game->curr_view == SI_GAME_VIEW_GAME) {
 		//render level
 		struct si_level *curr_level = &game->curr_level;
