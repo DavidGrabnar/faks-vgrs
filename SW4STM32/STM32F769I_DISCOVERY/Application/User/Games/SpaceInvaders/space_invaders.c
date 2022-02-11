@@ -474,11 +474,14 @@ void si_render(Screen * screen, struct si_game * game)
 		BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
 		BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
 		if (game->won) {
-			BSP_LCD_DisplayStringAt(0, screen->height / 2 - 64, "You won!", CENTER_MODE);
+			uint8_t buffer[] = "You won!";
+			BSP_LCD_DisplayStringAt(0, screen->height / 2 - 64, buffer, CENTER_MODE);
 		} else {
-			BSP_LCD_DisplayStringAt(0, screen->height / 2 - 64, "You lost!", CENTER_MODE);
+			uint8_t buffer[] = "You lost!";
+			BSP_LCD_DisplayStringAt(0, screen->height / 2 - 64, buffer, CENTER_MODE);
 		}
-		BSP_LCD_DisplayStringAt(0, screen->height / 2, "Move joystick down to restart", CENTER_MODE);
+		uint8_t buffer[] = "Move joystick down to restart";
+		BSP_LCD_DisplayStringAt(0, screen->height / 2, buffer, CENTER_MODE);
 	}
 }
 
