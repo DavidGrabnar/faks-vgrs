@@ -28,13 +28,13 @@ void si_init(Screen * screen, struct si_game * game)
 
 	game->curr_level.enemy_groups = NULL;
 
-	struct si_level * si_level1 = (struct si_level *) calloc(1, sizeof(struct si_level));
+	struct si_level * si_level1 = (struct si_level *) pvPortMalloc(1 * sizeof(struct si_level));
 
 	si_level1->group_count = 2;
 
 	// player
-	uint8_t ** bitmaps_player = (uint8_t **) calloc(1, sizeof(uint8_t *));
-	uint8_t * bitmap_player = (uint8_t *) malloc(sizeof(SI_PLAYER_BITMAP));
+	uint8_t ** bitmaps_player = (uint8_t **) pvPortMalloc(1 * sizeof(uint8_t *));
+	uint8_t * bitmap_player = (uint8_t *) pvPortMalloc(sizeof(SI_PLAYER_BITMAP));
 	memcpy(bitmap_player, SI_PLAYER_BITMAP, sizeof(SI_PLAYER_BITMAP));
 	bitmaps_player[0] = bitmap_player;
 
@@ -69,8 +69,8 @@ void si_init(Screen * screen, struct si_game * game)
 
 	struct si_bullet_group * si_bullet_group = &game->player.bullet_group;
 
-	uint8_t ** bitmaps_bullet = (uint8_t **) calloc(1, sizeof(uint8_t *));
-	uint8_t * bitmap_bullet = (uint8_t *) malloc(sizeof(SI_BULLET_BITMAP));
+	uint8_t ** bitmaps_bullet = (uint8_t **) pvPortMalloc(1 * sizeof(uint8_t *));
+	uint8_t * bitmap_bullet = (uint8_t *) pvPortMalloc(sizeof(SI_BULLET_BITMAP));
 	memcpy(bitmap_bullet, SI_BULLET_BITMAP, sizeof(SI_BULLET_BITMAP));
 	bitmaps_bullet[0] = bitmap_bullet;
 
@@ -83,7 +83,7 @@ void si_init(Screen * screen, struct si_game * game)
 	si_bullet_sprite->bitmaps = bitmaps_bullet;
 	si_bullet_sprite->index = 0;
 
-	struct si_bullet * si_bullets = (struct si_bullet *) calloc(SI_BULLET_MAX_COUNT, sizeof(struct si_bullet));
+	struct si_bullet * si_bullets = (struct si_bullet *) pvPortMalloc(SI_BULLET_MAX_COUNT * sizeof(struct si_bullet));
 
 	for (int bullet_index = 0; bullet_index < SI_BULLET_MAX_COUNT; bullet_index++) {
 		struct si_bullet * bullet = &si_bullets[bullet_index];
@@ -111,7 +111,7 @@ void si_init(Screen * screen, struct si_game * game)
 	si_bullet_group->count = 0;
 
 	// enemies
-	struct si_enemy_group * si_enemy_groups = (struct si_enemy_group *) calloc(2, sizeof(struct si_enemy_group));
+	struct si_enemy_group * si_enemy_groups = (struct si_enemy_group *) pvPortMalloc(2 * sizeof(struct si_enemy_group));
 
 	int group_pos_y = game->header_height;
 
@@ -135,10 +135,10 @@ void si_init(Screen * screen, struct si_game * game)
 		si_enemy_sprite->count = SI_ENEMY_BITMAP_COUNTS[enemy_group_index];
 		si_enemy_sprite->index = 0;
 
-		uint8_t ** bitmaps_enemy = (uint8_t **) calloc(2, sizeof(uint8_t *));
+		uint8_t ** bitmaps_enemy = (uint8_t **) pvPortMalloc(2 * sizeof(uint8_t *));
 		for (int bitmap_index = 0; bitmap_index < si_enemy_sprite->count; bitmap_index ++) {
 			int bimap_length = si_enemy_sprite->length / 8;
-			uint8_t * bitmap_enemy = (uint8_t *) malloc(bimap_length * sizeof(uint8_t));
+			uint8_t * bitmap_enemy = (uint8_t *) pvPortMalloc(bimap_length * sizeof(uint8_t));
 			memcpy(bitmap_enemy, SI_ENEMY_BITMAPS + bitmap_offset, bimap_length * sizeof(uint8_t));
 			bitmaps_enemy[bitmap_index] = bitmap_enemy;
 			bitmap_offset += bimap_length;
@@ -154,8 +154,6 @@ void si_init(Screen * screen, struct si_game * game)
 	game->levels = si_level1;
 
 	game->curr_level_index = 0;
-
-	return game;
 }
 
 struct si_enemy * si_generate_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y)
@@ -167,7 +165,7 @@ struct si_enemy * si_generate_enemies(Screen * screen, struct si_enemy_group * e
 
 	int max_offset = (enemy_group->full_width - enemy_group->formation_width) / 2;
 
-	struct si_enemy * enemies = (struct si_enemy *) calloc(enemy_group->count, sizeof(struct si_enemy));
+	struct si_enemy * enemies = (struct si_enemy *) pvPortMalloc(enemy_group->count * sizeof(struct si_enemy));
 
 	int index = 0;
 	for (int row_index = 0; row_index < enemy_rows; row_index++) {
@@ -553,12 +551,12 @@ void si_restart_level(Screen * screen, struct si_game * game)
 	// allocate memory for current level
 	if (new_level->enemy_groups != NULL) {
 		for (int enemy_group_index = 0; enemy_group_index < new_level->group_count; enemy_group_index++) {
-			free(new_level->enemy_groups->enemies);
+			vPortFree(new_level->enemy_groups[enemy_group_index].enemies);
 		}
-		free(new_level->enemy_groups);
+		vPortFree(new_level->enemy_groups);
 	}
 
-	struct si_enemy_group * enemy_groups = (struct si_enemy_group *) calloc(new_level->group_count, sizeof(struct si_enemy_group));
+	struct si_enemy_group * enemy_groups = (struct si_enemy_group *) pvPortMalloc(new_level->group_count * sizeof(struct si_enemy_group));
 	game->curr_level.enemy_groups = enemy_groups;
 
 	int enemy_count = 0;
@@ -581,7 +579,7 @@ void si_restart_level(Screen * screen, struct si_game * game)
 		new_group->sprite.index = curr_group->sprite.index;
 		new_group->sprite.bitmaps = curr_group->sprite.bitmaps;
 
-		struct si_enemy * enemies = (struct si_enemy *) calloc(new_group->count, sizeof(struct si_enemy));
+		struct si_enemy * enemies = (struct si_enemy *) pvPortMalloc(new_group->count * sizeof(struct si_enemy));
 		new_group->enemies = enemies;
 
 		enemy_count+= new_group->count;
