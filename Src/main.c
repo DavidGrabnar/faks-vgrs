@@ -125,7 +125,7 @@ int main(void)
 	const osThreadAttr_t GameUpdateTask_attributes = {
 	  .name = "GameUpdateTask",
 	  .priority = (osPriority_t) osPriorityNormal,
-	  .stack_size = 256
+	  .stack_size = 1024
 	};
 	GameUpdateTaskHandle = osThreadNew(GameUpdateTask, NULL, &GameUpdateTask_attributes);
 
