@@ -1,9 +1,8 @@
 /**
   ******************************************************************************
-  * @file    FreeRTOS/FreeRTOS_Timers/Inc/main.h
+  * @file    sd_diskio.h
   * @author  MCD Application Team
-  * @brief   This file contains all the functions prototypes for the main.c
-  *          file.
+  * @brief   Header for sd_diskio.c module.
   ******************************************************************************
   * @attention
   *
@@ -18,31 +17,16 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef __SD_DISKIO_H
+#define __SD_DISKIO_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f7xx_hal.h"
-#include "stm32f769i_discovery.h"
-#include "stm32f769i_discovery_lcd.h"
-#include "swap_chain.h"
-#include "space_invaders.h"
-#include "joystick.h"
-#include "storage.h"
-
+#include "stm32f769i_discovery_sd.h"
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
+extern const Diskio_drvTypeDef  SD_Driver;
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __MAIN_H */
+#endif /* __SD_DISKIO_H */
 
 

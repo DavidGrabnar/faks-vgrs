@@ -102,6 +102,9 @@ int main(void)
   int joystick_err = joystick_init();
   while (joystick_err);
 
+  STORAGE_STATUS status = storage_init();
+  while (status == STORAGE_NOK);
+
   /*
   uint8_t strptr[] = "   Hello world";
   BSP_LCD_SetFont(&Font24);

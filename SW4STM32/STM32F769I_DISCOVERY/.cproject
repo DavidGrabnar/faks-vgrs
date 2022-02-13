@@ -81,7 +81,7 @@
                                 								
                                 <option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.debuglevel.1902106053" name="Debug level" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.debuglevel" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.debuglevel.value.g3" valueType="enumerated"/>
                                 								
-                                <option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.1334519875" name="Optimization level" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.value.os" valueType="enumerated"/>
+                                <option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.1334519875" name="Optimization level" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.value.o0" valueType="enumerated"/>
                                 								
                                 <option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.ffunction.2098341581" name="Place functions in their own sections (-ffunction-sections)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.ffunction" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
@@ -118,6 +118,12 @@
                                     <listOptionValue builtIn="false" value="&quot;D:\Faks\S5\VGRS\STM\FreeRTOS_Timers\SW4STM32\STM32F769I_DISCOVERY\Application\User\Games\SpaceInvaders&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;D:\Faks\S5\VGRS\STM\FreeRTOS_Timers\SW4STM32\STM32F769I_DISCOVERY\Application\User\Joystick&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;D:\STM\STM32Cube\Repository\STM32Cube_FW_F7_V1.16.2\Middlewares\Third_Party\FatFs\src&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;D:\STM\STM32Cube\Repository\STM32Cube_FW_F7_V1.16.2\Middlewares\Third_Party\FatFs\src\drivers&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS_Timers/Application/User/Storage}&quot;"/>
                                     								
                                 </option>
                                 								
