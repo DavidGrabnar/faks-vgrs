@@ -11,6 +11,10 @@
 #include "swap_chain.h"
 #include "stm32f769i_discovery_lcd.h"
 #include "joystick.h"
+#include "storage.h"
+
+#define SI_CONFIG_SOURCE 1 // 0 - static, 1 - from SD card
+#define SI_CONFIG_INDEX 0
 
 #define SI_BULLET_MAX_COUNT 32 // fixed array length for bullets per entity
 
@@ -165,7 +169,14 @@ struct si_game
 };
 
 void si_init(Screen * screen, struct si_game * game);
-struct si_enemy * si_generate_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y);
+void si_init_static(Screen * screen, struct si_game * game);
+void si_init_storage(Screen * screen, struct si_game * game);
+
+void si_init_game(Screen * screen, struct si_game * game, int level_count, int tick_duration);
+void si_init_player(Screen * screen, struct si_player * player);
+void si_init_level(Screen * screen, struct si_level * level, int enemy_group_count);
+void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset);
+struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y);
 
 void si_handle_input(Screen * screen, struct si_game * game, struct joystick_state * state);
 

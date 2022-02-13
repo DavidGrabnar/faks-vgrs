@@ -92,6 +92,11 @@ int main(void)
   init.Pin = GPIO_PIN_1;
   HAL_GPIO_Init(GPIOJ, &init);
 
+  /*Initialize storage */
+  if (SI_CONFIG_SOURCE) {
+	  STORAGE_STATUS status = storage_init();
+	  while (status == STORAGE_NOK);
+  }
 
   /* Initialize the LCD */
   int screen_error = sc_screen_init(&screen);
@@ -101,8 +106,6 @@ int main(void)
   int joystick_err = joystick_init();
   while (joystick_err);
 
-  STORAGE_STATUS status = storage_init();
-  while (status == STORAGE_NOK);
 
   /*
   uint8_t strptr[] = "   Hello world";
