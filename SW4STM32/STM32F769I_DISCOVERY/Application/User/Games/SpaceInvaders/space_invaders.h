@@ -121,10 +121,12 @@ struct si_player
 	struct si_sprite sprite;
 	struct si_weapon weapon;
 	struct si_bullet_group bullet_group;
+	int full_health;
 
 	// dynamic
 	struct si_movement movement;
 	struct si_position position;
+	int health;
 };
 
 struct si_enemy_group
@@ -173,9 +175,9 @@ void si_init_static(Screen * screen, struct si_game * game);
 void si_init_storage(Screen * screen, struct si_game * game);
 
 void si_init_game(Screen * screen, struct si_game * game, int level_count, int tick_duration);
-void si_init_player(Screen * screen, struct si_player * player);
+void si_init_player(Screen * screen, struct si_player * player, int health, int step, int weapon_per_cycles);
 void si_init_level(Screen * screen, struct si_level * level, int enemy_group_count);
-void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset);
+void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset);
 struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y);
 
 void si_handle_input(Screen * screen, struct si_game * game, struct joystick_state * state);

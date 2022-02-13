@@ -22,7 +22,7 @@ void si_init_static(Screen * screen, struct si_game * game)
 {
 	si_init_game(screen, game, 1, 100);
 
-	si_init_player(screen, &game->player);
+	si_init_player(screen, &game->player, 1, 20, 5);
 
 	struct si_level * si_levels = (struct si_level *) pvPortMalloc(game->level_count * sizeof(struct si_level));
 	game->levels = si_levels;
@@ -41,35 +41,44 @@ void si_init_static(Screen * screen, struct si_game * game)
 
 			int sprite_index = 0; // will use later
 			int enemy_count = SI_ENEMY_COUNTS[enemy_group_index];
+			int step = 20;
 			float formation_width = SI_ENEMY_FORMATION_WIDTHS[enemy_group_index];
 			float full_width = SI_ENEMY_FULL_WIDTHS[enemy_group_index];
 
-			si_init_enemy_group(screen, &game->levels[0].enemy_groups[enemy_group_index], sprite_index, enemy_count, formation_width, full_width, &group_pos_y, &bitmap_offset);
+			si_init_enemy_group(screen, &game->levels[0].enemy_groups[enemy_group_index], sprite_index, enemy_count, step, formation_width, full_width, &group_pos_y, &bitmap_offset);
 		}
 	}
 }
 
 void si_init_storage(Screen * screen, struct si_game * game)
 {
-	FIL file;
+	FIL file1;
 	char buffer[512];
-	storage_open(&file, "config/games.txt");
+	storage_open(&file1, "config/games.txt");
 
-	int game_count = storage_read_integer(&file, buffer, 512);
+	int game_count = storage_read_integer(&file1, buffer, 512);
+	storage_close(&file1);
+
 	if (SI_CONFIG_INDEX < game_count - 1) {
-		// ERROR invalid index, not enough games in config
+		// ERROR invalid index, not enough games in config, fallback to static config
+		si_init_static(screen, game);
+		return;
 	}
 
+	FIL file;
 	sprintf(buffer, "config/game_%d/base.txt", SI_CONFIG_INDEX);
 	storage_open(&file, buffer);
 
 	int level_count = storage_read_integer(&file, buffer, 512);
 	int tick_duration = storage_read_integer(&file, buffer, 512);
+	int player_health = storage_read_integer(&file, buffer, 512);
+	int player_step = storage_read_integer(&file, buffer, 512);
+	int player_per_cycles = storage_read_integer(&file, buffer, 512);
 	storage_close(&file);
 
 	si_init_game(screen, game, level_count, tick_duration);
 
-	si_init_player(screen, &game->player);
+	si_init_player(screen, &game->player, player_health, player_step, player_per_cycles);
 
 	struct si_level * si_levels = (struct si_level *) pvPortMalloc(game->level_count * sizeof(struct si_level));
 	game->levels = si_levels;
@@ -99,11 +108,12 @@ void si_init_storage(Screen * screen, struct si_game * game)
 
 			int sprite_index = storage_read_integer(&file, buffer, 512); // will use later
 			int enemy_count = storage_read_integer(&file, buffer, 512);
+			int step = storage_read_integer(&file, buffer, 512);
 			float formation_width = storage_read_float(&file, buffer, 512);
 			float full_width = storage_read_float(&file, buffer, 512);
 			storage_close(&file);
 
-			si_init_enemy_group(screen, &game->levels[level_index].enemy_groups[enemy_group_index], sprite_index, enemy_count, formation_width, full_width, &group_pos_y, &bitmap_offset);
+			si_init_enemy_group(screen, &game->levels[level_index].enemy_groups[enemy_group_index], sprite_index, enemy_count, step, formation_width, full_width, &group_pos_y, &bitmap_offset);
 		}
 	}
 }
@@ -127,8 +137,10 @@ void si_init_game(Screen * screen, struct si_game * game, int level_count, int t
 	game->curr_level.enemy_groups = NULL;
 }
 
-void si_init_player(Screen * screen, struct si_player * player)
+void si_init_player(Screen * screen, struct si_player * player, int health, int step, int weapon_per_cycles)
 {
+	player->full_health = health;
+
 	uint8_t ** bitmaps_player = (uint8_t **) pvPortMalloc(1 * sizeof(uint8_t *));
 	uint8_t * bitmap_player = (uint8_t *) pvPortMalloc(sizeof(SI_PLAYER_BITMAP));
 	memcpy(bitmap_player, SI_PLAYER_BITMAP, sizeof(SI_PLAYER_BITMAP));
@@ -146,7 +158,7 @@ void si_init_player(Screen * screen, struct si_player * player)
 	struct si_movement * si_movement_player = &player->movement;
 	si_movement_player->direction = SI_DIRECTION_NONE;
 	si_movement_player->mode = SI_MOVEMENT_MODE_PLAYER;
-	si_movement_player->step = 20;
+	si_movement_player->step = step;
 
 	struct si_position * si_position_player = &player->position;
 	si_position_player->x = (screen->width - si_player_sprite->width * si_player_sprite->scale) / 2;
@@ -159,7 +171,7 @@ void si_init_player(Screen * screen, struct si_player * player)
 	si_boundary_player->y_max = 0;
 
 	struct si_weapon * si_weapon_player = &player->weapon;
-	si_weapon_player->per_cycles = 5;
+	si_weapon_player->per_cycles = weapon_per_cycles;
 	si_weapon_player->cycles = 0;
 	si_weapon_player->triggering = 0;
 
@@ -212,7 +224,7 @@ void si_init_level(Screen * screen, struct si_level * level, int enemy_group_cou
 	level->group_count = enemy_group_count;
 }
 
-void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset)
+void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset)
 {
 	enemy_group->count = enemy_count;
 	enemy_group->formation_width = screen->width * formation_width;
@@ -221,7 +233,7 @@ void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, i
 	struct si_movement * si_movement1 = &enemy_group->movement;
 	si_movement1->direction = SI_DIRECTION_LEFT;
 	si_movement1->mode = SI_MOVEMENT_MODE_ENEMY;
-	si_movement1->step = 20;
+	si_movement1->step = step;
 
 	struct si_sprite * si_enemy_sprite = &enemy_group->sprite;
 
@@ -265,7 +277,7 @@ struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy
 		// render enemy
 		for (int cell_index = 0; cell_index < per_row; cell_index++) {
 			struct si_enemy * curr_enemy = &enemies[index++];
-			curr_enemy->health = 1;
+			curr_enemy->health = 1; // TODO add health to group and enemy, show by color mapped (ex.: 3 - red, 2 - yellow, 1 - red)
 
 			curr_enemy->position.x = enemy_pos_x;
 			curr_enemy->position.y = *group_pos_y;
@@ -287,15 +299,9 @@ void si_handle_input(Screen * screen, struct si_game * game, struct joystick_sta
 {
 	if (game->curr_view == SI_GAME_VIEW_START) {
 		if (state->y < 1024) {
-			if (game->curr_level_index == 0) {
-				game->curr_level_index = 0;
-				si_restart_level(screen, game);
-				si_restart_stats(game);
-			} else {
-				game->curr_level_index = 0;
-				si_restart_level(screen, game);
-				si_restart_stats(game);
-			}
+			game->curr_level_index = 0;
+			si_restart_level(screen, game);
+			si_restart_stats(game);
 			game->curr_view = SI_GAME_VIEW_GAME;
 		}
 	} else if (game->curr_view == SI_GAME_VIEW_GAME) {
@@ -449,10 +455,15 @@ void si_update(Screen * screen, struct si_game * game)
 				continue;
 			}
 			if (curr_enemy->position.y + (curr_group->sprite.length / curr_group->sprite.width) * curr_group->sprite.scale > game->player_height) {
-				// RIP
-				game->won = 0;
-				game->time_end = HAL_GetTick();
-				game->curr_view = SI_GAME_VIEW_END;
+				game->player.health--;
+				if (game->player.health <= 0) {
+					// RIP
+					game->won = 0;
+					game->time_end = HAL_GetTick();
+					game->curr_view = SI_GAME_VIEW_END;
+				} else {
+					si_restart_level(screen, game);
+				}
 				return;
 			}
 		}
@@ -630,7 +641,7 @@ void si_render_header(Screen * screen, struct si_game * game)
 	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
 	BSP_LCD_DisplayStringAt(screen->width - (screen->width - game->header_text_width) - 140, (game->header_height - game->header_text_height) / 2, " Lives: ", LEFT_MODE);
 	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-	sprintf(buffer, "%2d", 1);
+	sprintf(buffer, "%2d", game->player.health);
 	BSP_LCD_DisplayStringAt(screen->width - (screen->width - game->header_text_width), (game->header_height - game->header_text_height) / 2, buffer, LEFT_MODE);
 
 	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
@@ -704,4 +715,6 @@ void si_restart_stats(struct si_game * game)
 	game->time_start = HAL_GetTick();
 	game->time_end = 0;
 	game->won = 0;
+
+	game->player.health = game->player.full_health;
 }
