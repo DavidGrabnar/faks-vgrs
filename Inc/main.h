@@ -29,6 +29,7 @@ extern "C" {
 #include "stm32f7xx_hal.h"
 #include "stm32f769i_discovery.h"
 #include "stm32f769i_discovery_lcd.h"
+#include "cmsis_os.h"
 #include "swap_chain.h"
 #include "space_invaders.h"
 #include "joystick.h"
