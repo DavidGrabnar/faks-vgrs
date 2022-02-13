@@ -109,7 +109,6 @@ void si_init_storage(Screen * screen, struct si_game * game)
 
 			int sprite_index = storage_read_integer(&file, buffer, 512); // will use later
 			int enemy_count = storage_read_integer(&file, buffer, 512);
-			//int step = 20;
 			int step = storage_read_integer(&file, buffer, 512);
 			int full_health = storage_read_integer(&file, buffer, 512);
 			float formation_width = storage_read_float(&file, buffer, 512);
@@ -468,7 +467,7 @@ void si_update(Screen * screen, struct si_game * game)
 					game->time_end = HAL_GetTick();
 					game->curr_view = SI_GAME_VIEW_END;
 				} else {
-					si_restart_level(screen, game);
+					si_restart_enemy_positions(screen, game);
 				}
 				return;
 			}
@@ -714,6 +713,24 @@ void si_restart_level(Screen * screen, struct si_game * game)
 	}
 
 	new_level->enemy_alive_count = enemy_count;
+}
+
+void si_restart_enemy_positions(Screen * screen, struct si_game * game)
+{
+	struct si_level *curr_level = &game->levels[game->curr_level_index];
+	struct si_level *new_level = &game->curr_level;
+
+	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
+		struct si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
+		struct si_enemy_group * new_group = &new_level->enemy_groups[enemy_group_index];
+
+		for (int enemy_index = 0; enemy_index < new_group->count; enemy_index++) {
+			struct si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
+			struct si_enemy * new_enemy = &new_group->enemies[enemy_index];
+			new_enemy->position.x = curr_enemy->position.x;
+			new_enemy->position.y = curr_enemy->position.y;
+		}
+	}
 }
 
 void si_restart_stats(struct si_game * game)

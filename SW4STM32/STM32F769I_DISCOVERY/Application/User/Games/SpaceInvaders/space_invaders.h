@@ -194,6 +194,7 @@ void si_render_sprite(struct si_sprite * sprite, int x, int y, uint32_t color);
 void si_render_header(Screen * screen, struct si_game * game);
 
 void si_restart_level(Screen * screen, struct si_game * game);
+void si_restart_enemy_positions(Screen * screen, struct si_game * game);
 void si_restart_stats(struct si_game * game);
 
 uint32_t si_get_enemy_color(int health, int full_health);
