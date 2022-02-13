@@ -42,10 +42,11 @@ void si_init_static(Screen * screen, struct si_game * game)
 			int sprite_index = 0; // will use later
 			int enemy_count = SI_ENEMY_COUNTS[enemy_group_index];
 			int step = 20;
+			int full_health = 2;
 			float formation_width = SI_ENEMY_FORMATION_WIDTHS[enemy_group_index];
 			float full_width = SI_ENEMY_FULL_WIDTHS[enemy_group_index];
 
-			si_init_enemy_group(screen, &game->levels[0].enemy_groups[enemy_group_index], sprite_index, enemy_count, step, formation_width, full_width, &group_pos_y, &bitmap_offset);
+			si_init_enemy_group(screen, &game->levels[0].enemy_groups[enemy_group_index], sprite_index, enemy_count, step, full_health, formation_width, full_width, &group_pos_y, &bitmap_offset);
 		}
 	}
 }
@@ -102,18 +103,20 @@ void si_init_storage(Screen * screen, struct si_game * game)
 		int bitmap_offset = 0;
 		for (int enemy_group_index = 0; enemy_group_index < game->levels[level_index].group_count; enemy_group_index++) {
 
-			sprintf(buffer, "config/game_%d/level_%d/enemy_0.txt", SI_CONFIG_INDEX, level_index, enemy_group_index);
+			sprintf(buffer, "config/game_%d/level_%d/enemy_%d.txt", SI_CONFIG_INDEX, level_index, enemy_group_index);
 			FIL file;
 			storage_open(&file, buffer);
 
 			int sprite_index = storage_read_integer(&file, buffer, 512); // will use later
 			int enemy_count = storage_read_integer(&file, buffer, 512);
+			//int step = 20;
 			int step = storage_read_integer(&file, buffer, 512);
+			int full_health = storage_read_integer(&file, buffer, 512);
 			float formation_width = storage_read_float(&file, buffer, 512);
 			float full_width = storage_read_float(&file, buffer, 512);
 			storage_close(&file);
 
-			si_init_enemy_group(screen, &game->levels[level_index].enemy_groups[enemy_group_index], sprite_index, enemy_count, step, formation_width, full_width, &group_pos_y, &bitmap_offset);
+			si_init_enemy_group(screen, &game->levels[level_index].enemy_groups[enemy_group_index], sprite_index, enemy_count, step, full_health, formation_width, full_width, &group_pos_y, &bitmap_offset);
 		}
 	}
 }
@@ -224,9 +227,10 @@ void si_init_level(Screen * screen, struct si_level * level, int enemy_group_cou
 	level->group_count = enemy_group_count;
 }
 
-void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset)
+void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, int full_health, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset)
 {
 	enemy_group->count = enemy_count;
+	enemy_group->full_health = full_health;
 	enemy_group->formation_width = screen->width * formation_width;
 	enemy_group->full_width = screen->width * full_width;
 
@@ -277,7 +281,7 @@ struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy
 		// render enemy
 		for (int cell_index = 0; cell_index < per_row; cell_index++) {
 			struct si_enemy * curr_enemy = &enemies[index++];
-			curr_enemy->health = 1; // TODO add health to group and enemy, show by color mapped (ex.: 3 - red, 2 - yellow, 1 - red)
+			curr_enemy->health = enemy_group->full_health;
 
 			curr_enemy->position.x = enemy_pos_x;
 			curr_enemy->position.y = *group_pos_y;
@@ -392,9 +396,11 @@ void si_update(Screen * screen, struct si_game * game)
 							game->player.bullet_group.bullets[bullet_index].position.y = game->player.bullet_group.bullets[game->player.bullet_group.count - 1].position.y;
 						}
 						game->player.bullet_group.count--;
-						curr_enemy->health = 0;
-						game->score++;
-						curr_level->enemy_alive_count--;
+						curr_enemy->health--;
+						if (curr_enemy->health == 0) {
+							curr_level->enemy_alive_count--;
+							game->score++;
+						}
 						hit = 1;
 						break;
 					}
@@ -555,7 +561,7 @@ void si_render(Screen * screen, struct si_game * game)
 				if (curr_enemy->health == 0) {
 					continue;
 				}
-				si_render_sprite(curr_sprite, curr_enemy->position.x, curr_enemy->position.y);
+				si_render_sprite(curr_sprite, curr_enemy->position.x, curr_enemy->position.y, si_get_enemy_color(curr_enemy->health, curr_group->full_health));
 			}
 		}
 
@@ -563,10 +569,10 @@ void si_render(Screen * screen, struct si_game * game)
 		struct si_player * player = &game->player;
 		struct si_sprite * sprite = &player->sprite;
 
-		si_render_sprite(sprite, player->position.x, player->position.y);
+		si_render_sprite(sprite, player->position.x, player->position.y, LCD_COLOR_WHITE);
 		for (int bullet_index = 0; bullet_index < player->bullet_group.count; bullet_index++) {
 			struct si_bullet * bullet = &player->bullet_group.bullets[bullet_index];
-			si_render_sprite(&player->bullet_group.sprite, bullet->position.x, bullet->position.y);
+			si_render_sprite(&player->bullet_group.sprite, bullet->position.x, bullet->position.y, LCD_COLOR_WHITE);
 		}
 
 		BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
@@ -590,7 +596,7 @@ void si_render(Screen * screen, struct si_game * game)
 	}
 }
 
-void si_render_sprite(struct si_sprite * sprite, int x, int y)
+void si_render_sprite(struct si_sprite * sprite, int x, int y, uint32_t front_color)
 {
 	uint8_t * bitmap = sprite->bitmaps[sprite->index];
 	int height = sprite->length / sprite->width;
@@ -601,7 +607,7 @@ void si_render_sprite(struct si_sprite * sprite, int x, int y)
 			int bit_offset = bit_index % 8;
 
 			uint32_t color = bitmap[byte_index] & (1 << (7 - bit_offset))
-				? LCD_COLOR_WHITE
+				? front_color
 				: LCD_COLOR_BLACK;
 
 			BSP_LCD_SetTextColor(color);
@@ -671,6 +677,7 @@ void si_restart_level(Screen * screen, struct si_game * game)
 		struct si_enemy_group * new_group = &new_level->enemy_groups[enemy_group_index];
 
 		new_group->count = curr_group->count;
+		new_group->full_health = curr_group->full_health;
 		new_group->formation_width = curr_group->formation_width;
 		new_group->full_width = curr_group->full_width;
 
@@ -717,4 +724,11 @@ void si_restart_stats(struct si_game * game)
 	game->won = 0;
 
 	game->player.health = game->player.full_health;
+}
+
+uint32_t si_get_enemy_color(int health, int full_health)
+{
+	int color_count = 4;
+	uint32_t colors[] = {LCD_COLOR_RED, LCD_COLOR_ORANGE, LCD_COLOR_YELLOW, LCD_COLOR_GREEN};
+	return colors[(int)((health / (float)full_health) * color_count) - 1];
 }

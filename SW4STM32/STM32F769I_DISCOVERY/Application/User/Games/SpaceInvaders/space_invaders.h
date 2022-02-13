@@ -136,6 +136,7 @@ struct si_enemy_group
 	int count;
 	int formation_width;
 	int full_width;
+	int full_health;
 
 	// dynamic
 	struct si_movement movement;
@@ -177,7 +178,7 @@ void si_init_storage(Screen * screen, struct si_game * game);
 void si_init_game(Screen * screen, struct si_game * game, int level_count, int tick_duration);
 void si_init_player(Screen * screen, struct si_player * player, int health, int step, int weapon_per_cycles);
 void si_init_level(Screen * screen, struct si_level * level, int enemy_group_count);
-void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset);
+void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, int full_health, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset);
 struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y);
 
 void si_handle_input(Screen * screen, struct si_game * game, struct joystick_state * state);
@@ -189,10 +190,12 @@ void si_update_sprite(struct si_sprite * sprite);
 
 void si_render(Screen * screen, struct si_game * game);
 
-void si_render_sprite(struct si_sprite * sprite, int x, int y);
+void si_render_sprite(struct si_sprite * sprite, int x, int y, uint32_t color);
 void si_render_header(Screen * screen, struct si_game * game);
 
 void si_restart_level(Screen * screen, struct si_game * game);
 void si_restart_stats(struct si_game * game);
+
+uint32_t si_get_enemy_color(int health, int full_health);
 
 #endif /* APPLICATION_USER_GAMES_SPACEINVADERS_SPACE_INVADERS_H_ */
