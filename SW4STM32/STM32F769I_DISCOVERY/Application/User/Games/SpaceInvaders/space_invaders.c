@@ -298,7 +298,7 @@ struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy
 	return enemies;
 }
 
-void si_handle_input(Screen * screen, struct si_game * game, struct joystick_state * state)
+void si_update_view(Screen * screen, struct si_game * game, struct joystick_state * state)
 {
 	if (game->curr_view == SI_GAME_VIEW_START) {
 		if (state->y < 1024) {

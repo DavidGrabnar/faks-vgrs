@@ -18,8 +18,8 @@
 #include <stdlib.h>
 
 typedef enum {
-	STORAGE_OK,
-	STORAGE_NOK
+	STORAGE_OK = 0,
+	STORAGE_NOK = 1
 } STORAGE_STATUS;
 
 FATFS SD_FatFs;

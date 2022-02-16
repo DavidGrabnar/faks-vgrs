@@ -28,24 +28,29 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-osThreadId_t LedGreenTaskHandle;
-osTimerId_t idTimer1;
-uint8_t lcd_status = LCD_OK;
+osTimerId_t errorTimer;
+
+osThreadId_t IntervalTaskHandle;
+osThreadId_t GameUpdateTaskHandle;
+osThreadId_t HandleInputTaskHandle;
 
 Screen screen;
 struct si_game game;
-osThreadId_t GameUpdateTaskHandle;
 
-struct joystick_state state;
+struct joystick_state joystick_state;
 
 /* Private function prototypes -----------------------------------------------*/
 static void MPU_Config(void);
-void osTimerCallback(void *argument);
-static void ToggleLEDsThread(void const *argument);
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
-void LedGreenTask(void *argument);
+
+void show_error();
+
+void errorCallback(void *argument);
+
+void IntervalTask(void *argument);
 void GameUpdateTask(void *argument);
+void HandleInputTask(void *argument);
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -78,55 +83,40 @@ int main(void)
   SystemClock_Config();
 
   /* Initialize LEDs */
-  BSP_LED_Init(LED1);
-  BSP_LED_Init(LED2);
+  BSP_LED_Init(LED_RED); // for errors
+  BSP_LED_Init(LED_GREEN); // for verification
 
-  /* Initialize PBs */
-  // TODO refactor to config and to separate control and task with iterrupts
-  GPIO_InitTypeDef init = {0};
-  init.Mode = GPIO_MODE_INPUT;
-
-  init.Pin = GPIO_PIN_0;
-  HAL_GPIO_Init(GPIOJ, &init);
-
-  init.Pin = GPIO_PIN_1;
-  HAL_GPIO_Init(GPIOJ, &init);
-
-  /*Initialize storage */
+  STORAGE_STATUS storage_status = STORAGE_OK;
   if (SI_CONFIG_SOURCE) {
-	  STORAGE_STATUS status = storage_init();
-	  while (status == STORAGE_NOK);
+	  storage_status = storage_init();
   }
 
-  /* Initialize the LCD */
   int screen_error = sc_screen_init(&screen);
-  while (screen_error != 0);
   si_init(&screen, &game);
 
-  int joystick_err = joystick_init();
-  while (joystick_err);
-
-
-  /*
-  uint8_t strptr[] = "   Hello world";
-  BSP_LCD_SetFont(&Font24);
-  BSP_LCD_SetTextColor(LCD_COLOR_DARKBLUE);
-  BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
-  BSP_LCD_DisplayStringAtLine(7, strptr);*/
+  int joystick_error = joystick_init();
 
   osKernelInitialize();
 
-/* RUNNING MULTIPLE TASKS CAUSES HARDFAULT
-  idTimer1 = osTimerNew(osTimerCallback, osTimerPeriodic, NULL, NULL);
-  osTimerStart(idTimer1, 100);
+  if (storage_status || screen_error || joystick_error) {
+	  show_error();
+	  while(1);
+  }
 
-  const osThreadAttr_t LedGreenTask_attributes = {
-      .name = "GreenTask",
+  const osThreadAttr_t IntervalTask_attributes = {
+      .name = "IntervalTask",
       .priority = (osPriority_t) osPriorityNormal,
       .stack_size = 256
     };
-    LedGreenTaskHandle = osThreadNew(LedGreenTask, NULL, &LedGreenTask_attributes);
-*/
+  	  IntervalTaskHandle = osThreadNew(IntervalTask, NULL, &IntervalTask_attributes);
+
+	const osThreadAttr_t HandleInputTask_attributes = {
+	  .name = "HandleInputTask",
+	  .priority = (osPriority_t) osPriorityNormal,
+	  .stack_size = 256
+	};
+	HandleInputTaskHandle = osThreadNew(HandleInputTask, NULL, &HandleInputTask_attributes);
+
 	const osThreadAttr_t GameUpdateTask_attributes = {
 	  .name = "GameUpdateTask",
 	  .priority = (osPriority_t) osPriorityNormal,
@@ -142,63 +132,54 @@ int main(void)
 
 }
 
+void show_error()
+{
+	errorTimer = osTimerNew(errorCallback, osTimerPeriodic, NULL, NULL);
+	osTimerStart(errorTimer, 100);
+}
+
 /**
   * @brief  Timer Callback that toggle LED1
   * @param  argument not used
   * @retval None
   */
-void osTimerCallback(void *argument)
+void errorCallback(void *argument)
 {
   (void) argument;
 
-  /* Toggle LED1*/
-  BSP_LED_Toggle(LED1);
+  BSP_LED_Toggle(LED_RED);
 }
 
-/**
-  * @brief  Toggle LED2 thread
-  * @param  argument not used
-  * @retval None
-  */
-static void ToggleLEDsThread(void const *argument)
+void IntervalTask(void *argument)
 {
-  (void) argument;
-
-  for (;;)
-  {
-    /* Toggle LED2 each 400ms */
-    BSP_LED_Toggle(LED2);
-
-    osDelay(400);
-  }
-}
-
-void LedGreenTask(void *argument)
-{
-  /* Infinite loop */
-  for(;;)
+  while(1)
   {
 	BSP_LED_Toggle(LED_GREEN);
     osDelay(1000);
-    //joystick_read(&state); // osDelay problem again ... delay hangs
   }
-
 }
 
 void GameUpdateTask(void *argument)
 {
-  /* Infinite loop */
-  for(;;)
+  while(1)
   {
-	  // TODO move input handling to another task, when osDelay and task switching starts working :/
 	sc_screen_swap_buffers(&screen);
-	joystick_read(&state);
-    si_handle_input(&screen, &game, &state);
+	si_update_view(&screen, &game, &joystick_state);
 	si_update(&screen, &game);
 	si_render(&screen, &game);
     osDelay(game.tick_duration);
   }
 
+}
+
+
+void HandleInputTask(void *argument)
+{
+  while(1)
+  {
+	joystick_read(&joystick_state);
+    osDelay(INPUT_HANDLE_INTERVAL);
+  }
 }
 
 /**

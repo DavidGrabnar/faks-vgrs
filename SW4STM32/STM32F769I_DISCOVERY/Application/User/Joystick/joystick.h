@@ -12,6 +12,8 @@
 
 #include "stm32f7xx_hal.h"
 
+#define INPUT_HANDLE_INTERVAL 10
+
 struct joystick_config
 {
     GPIO_TypeDef * gpio_x;

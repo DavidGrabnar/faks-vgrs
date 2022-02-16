@@ -181,8 +181,7 @@ void si_init_level(Screen * screen, struct si_level * level, int enemy_group_cou
 void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, int full_health, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset);
 struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y);
 
-void si_handle_input(Screen * screen, struct si_game * game, struct joystick_state * state);
-
+void si_update_view(Screen * screen, struct si_game * game, struct joystick_state * state);
 void si_update(Screen * screen, struct si_game * game);
 
 int si_update_position(struct si_movement * movement, struct si_position * position, int shift);
