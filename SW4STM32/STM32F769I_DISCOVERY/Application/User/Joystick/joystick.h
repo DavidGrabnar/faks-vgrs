@@ -14,7 +14,7 @@
 
 #define INPUT_HANDLE_INTERVAL 10
 
-struct joystick_config
+typedef struct
 {
     GPIO_TypeDef * gpio_x;
     uint16_t       pin_x;
@@ -25,16 +25,17 @@ struct joystick_config
     uint32_t       adc_channel_y;
 
     ADC_TypeDef*   adc_instance;
-};
+} joystick_config;
 
-struct joystick_state
+typedef struct
 {
 	uint16_t x;
 	uint16_t y;
-};
+} joystick_state;
 
 int joystick_init();
-int joystick_read(struct joystick_state * state);
+int joystick_read(joystick_state * state);
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc);
 void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc);
+
 #endif /* APPLICATION_USER_JOYSTICK_JOYSTICK_H_ */

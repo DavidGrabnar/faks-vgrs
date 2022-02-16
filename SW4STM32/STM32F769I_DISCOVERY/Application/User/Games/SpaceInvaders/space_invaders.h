@@ -18,36 +18,36 @@
 
 #define SI_BULLET_MAX_COUNT 32 // fixed array length for bullets per entity
 
-enum si_direction
+typedef enum
 {
 	SI_DIRECTION_LEFT = -1,
 	SI_DIRECTION_UP = -1,
 	SI_DIRECTION_NONE = 0,
 	SI_DIRECTION_RIGHT = 1,
 	SI_DIRECTION_DOWN = 1
-};
+} si_direction;
 
-enum si_movement_mode
+typedef enum
 {
 	SI_MOVEMENT_MODE_ENEMY,
 	SI_MOVEMENT_MODE_PLAYER,
 	SI_MOVEMENT_MODE_BULLET
-};
+} si_movement_mode;
 
-enum si_bullet_target
+typedef enum
 {
 	SI_BULLET_TARGET_ENEMY,
 	SI_BULLET_TARGET_PLAYER
-};
+} si_bullet_target;
 
-enum si_game_view
+typedef enum
 {
 	SI_GAME_VIEW_START,
 	SI_GAME_VIEW_GAME,
 	SI_GAME_VIEW_END
-};
+} si_game_view;
 
-struct si_sprite
+typedef struct
 {
 	// height = length / width
 	int width;
@@ -58,102 +58,102 @@ struct si_sprite
 
 	// dynamic
 	int index;
-};
+} si_sprite;
 
-struct si_boundary
+typedef struct
 {
 	int x_min;
 	int x_max;
 	int y_min;
 	int y_max;
-};
+} si_boundary;
 
-struct si_position
+typedef struct
 {
-	struct si_boundary boundary;
+	si_boundary boundary;
 	int x;
 	int y;
-};
+} si_position;
 
-struct si_bullet
+typedef struct
 {
-	struct si_position position;
-};
+	si_position position;
+} si_bullet;
 
-struct si_weapon
+typedef struct
 {
 	int per_cycles; // how many cycles until shot ready
 
 	// dynamic
 	int cycles;
 	int triggering;
-};
+} si_weapon;
 
-struct si_movement
+typedef struct
 {
-	enum si_direction direction;
-	enum si_movement_mode mode;
+	si_direction direction;
+	si_movement_mode mode;
 	int step;
-};
+} si_movement;
 
-struct si_bullet_group
+typedef struct
 {
-	struct si_sprite sprite;
-	struct si_movement movement;
-	enum si_bullet_target target;
+	si_sprite sprite;
+	si_movement movement;
+	si_bullet_target target;
 	int capacity;
 
 	// dynamic
-	struct si_bullet * bullets;
+	si_bullet * bullets;
 	int count;
-};
+} si_bullet_group;
 
-struct si_enemy
+typedef struct
 {
-	struct si_position position;
+	si_position position;
 	// TODO bullet
 
 	int health;
-};
+} si_enemy;
 
-struct si_player
+typedef struct
 {
-	struct si_sprite sprite;
-	struct si_weapon weapon;
-	struct si_bullet_group bullet_group;
+	si_sprite sprite;
+	si_weapon weapon;
+	si_bullet_group bullet_group;
 	int full_health;
 
 	// dynamic
-	struct si_movement movement;
-	struct si_position position;
+	si_movement movement;
+	si_position position;
 	int health;
-};
+} si_player;
 
-struct si_enemy_group
+typedef struct
 {
-	struct si_sprite sprite;
-	struct si_enemy * enemies;
+	si_sprite sprite;
+	si_enemy * enemies;
 	int count;
 	int formation_width;
 	int full_width;
 	int full_health;
 
 	// dynamic
-	struct si_movement movement;
-};
+	si_movement movement;
+} si_enemy_group;
 
-struct si_level
+typedef struct
 {
-	struct si_enemy_group * enemy_groups;
+	si_enemy_group * enemy_groups;
 	int group_count;
 
 	int enemy_alive_count;
-};
+} si_level;
 
-struct si_game
+typedef struct
 {
-	struct si_level * levels;
-	struct si_player player;
+	si_level * levels;
+	si_player player;
 	int level_count;
 	int header_height;
 	int header_text_height;
@@ -162,39 +162,39 @@ struct si_game
 	int tick_duration; // [ms]
 
 	// dynamic
-	struct si_level curr_level;
+	si_level curr_level;
 	int curr_level_index;
 	int score;
 	uint32_t time_start;
 	uint32_t time_end;
-	enum si_game_view curr_view;
+	si_game_view curr_view;
 	int won;
-};
+} si_game;
 
-void si_init(Screen * screen, struct si_game * game);
-void si_init_static(Screen * screen, struct si_game * game);
-void si_init_storage(Screen * screen, struct si_game * game);
+void si_init(Screen * screen, si_game * game);
+void si_init_static(Screen * screen, si_game * game);
+void si_init_storage(Screen * screen, si_game * game);
 
-void si_init_game(Screen * screen, struct si_game * game, int level_count, int tick_duration);
-void si_init_player(Screen * screen, struct si_player * player, int health, int step, int weapon_per_cycles);
-void si_init_level(Screen * screen, struct si_level * level, int enemy_group_count);
-void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, int full_health, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset);
-struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y);
+void si_init_game(Screen * screen, si_game * game, int level_count, int tick_duration);
+void si_init_player(Screen * screen, si_player * player, int health, int step, int weapon_per_cycles);
+void si_init_level(Screen * screen, si_level * level, int enemy_group_count);
+void si_init_enemy_group(Screen * screen, si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, int full_health, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset);
+si_enemy * si_init_enemies(Screen * screen, si_enemy_group * enemy_group, int * group_pos_y);
 
-void si_update_view(Screen * screen, struct si_game * game, struct joystick_state * state);
-void si_update(Screen * screen, struct si_game * game);
+void si_update_view(Screen * screen, si_game * game, joystick_state * state);
+void si_update(Screen * screen, si_game * game);
 
-int si_update_position(struct si_movement * movement, struct si_position * position, int shift);
-void si_update_sprite(struct si_sprite * sprite);
+int si_update_position(si_movement * movement, si_position * position, int shift);
+void si_update_sprite(si_sprite * sprite);
 
-void si_render(Screen * screen, struct si_game * game);
+void si_render(Screen * screen, si_game * game);
 
-void si_render_sprite(struct si_sprite * sprite, int x, int y, uint32_t color);
-void si_render_header(Screen * screen, struct si_game * game);
+void si_render_sprite(si_sprite * sprite, int x, int y, uint32_t color);
+void si_render_header(Screen * screen, si_game * game);
 
-void si_restart_level(Screen * screen, struct si_game * game);
-void si_restart_enemy_positions(Screen * screen, struct si_game * game);
-void si_restart_stats(struct si_game * game);
+void si_restart_level(Screen * screen, si_game * game);
+void si_restart_enemy_positions(Screen * screen, si_game * game);
+void si_restart_stats(si_game * game);
 
 uint32_t si_get_enemy_color(int health, int full_health);
 

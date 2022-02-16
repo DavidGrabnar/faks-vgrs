@@ -10,7 +10,7 @@
 #include "space_invaders.h"
 #include "assets.h"
 
-void si_init(Screen * screen, struct si_game * game) {
+void si_init(Screen * screen, si_game * game) {
 	if (SI_CONFIG_SOURCE) {
 		si_init_storage(screen, game);
 	} else {
@@ -18,13 +18,13 @@ void si_init(Screen * screen, struct si_game * game) {
 	}
 }
 
-void si_init_static(Screen * screen, struct si_game * game)
+void si_init_static(Screen * screen, si_game * game)
 {
 	si_init_game(screen, game, 1, 100);
 
 	si_init_player(screen, &game->player, 1, 20, 5);
 
-	struct si_level * si_levels = (struct si_level *) pvPortMalloc(game->level_count * sizeof(struct si_level));
+	si_level * si_levels = (si_level *) pvPortMalloc(game->level_count * sizeof(si_level));
 	game->levels = si_levels;
 	game->curr_level_index = 0;
 
@@ -32,7 +32,7 @@ void si_init_static(Screen * screen, struct si_game * game)
 
 		si_init_level(screen, &game->levels[level_index], 2);
 
-		struct si_enemy_group * si_enemy_groups = (struct si_enemy_group *) pvPortMalloc(game->levels[level_index].group_count * sizeof(struct si_enemy_group));
+		si_enemy_group * si_enemy_groups = (si_enemy_group *) pvPortMalloc(game->levels[level_index].group_count * sizeof(si_enemy_group));
 		game->levels[level_index].enemy_groups = si_enemy_groups;
 
 		int group_pos_y = game->header_height;
@@ -51,7 +51,7 @@ void si_init_static(Screen * screen, struct si_game * game)
 	}
 }
 
-void si_init_storage(Screen * screen, struct si_game * game)
+void si_init_storage(Screen * screen, si_game * game)
 {
 	FIL file1;
 	char buffer[512];
@@ -81,7 +81,7 @@ void si_init_storage(Screen * screen, struct si_game * game)
 
 	si_init_player(screen, &game->player, player_health, player_step, player_per_cycles);
 
-	struct si_level * si_levels = (struct si_level *) pvPortMalloc(game->level_count * sizeof(struct si_level));
+	si_level * si_levels = (si_level *) pvPortMalloc(game->level_count * sizeof(si_level));
 	game->levels = si_levels;
 	game->curr_level_index = 0;
 
@@ -96,7 +96,7 @@ void si_init_storage(Screen * screen, struct si_game * game)
 
 		si_init_level(screen, &game->levels[level_index], enemy_group_count);
 
-		struct si_enemy_group * si_enemy_groups = (struct si_enemy_group *) pvPortMalloc(game->levels[level_index].group_count * sizeof(struct si_enemy_group));
+		si_enemy_group * si_enemy_groups = (si_enemy_group *) pvPortMalloc(game->levels[level_index].group_count * sizeof(si_enemy_group));
 		game->levels[level_index].enemy_groups = si_enemy_groups;
 
 		int group_pos_y = game->header_height;
@@ -120,7 +120,7 @@ void si_init_storage(Screen * screen, struct si_game * game)
 	}
 }
 
-void si_init_game(Screen * screen, struct si_game * game, int level_count, int tick_duration)
+void si_init_game(Screen * screen, si_game * game, int level_count, int tick_duration)
 {
 	game->level_count = level_count;
 	game->tick_duration = tick_duration;
@@ -139,7 +139,7 @@ void si_init_game(Screen * screen, struct si_game * game, int level_count, int t
 	game->curr_level.enemy_groups = NULL;
 }
 
-void si_init_player(Screen * screen, struct si_player * player, int health, int step, int weapon_per_cycles)
+void si_init_player(Screen * screen, si_player * player, int health, int step, int weapon_per_cycles)
 {
 	player->full_health = health;
 
@@ -148,7 +148,7 @@ void si_init_player(Screen * screen, struct si_player * player, int health, int 
 	memcpy(bitmap_player, SI_PLAYER_BITMAP, sizeof(SI_PLAYER_BITMAP));
 	bitmaps_player[0] = bitmap_player;
 
-	struct si_sprite * si_player_sprite = &player->sprite;
+	si_sprite * si_player_sprite = &player->sprite;
 
 	si_player_sprite->width = SI_PLAYER_WIDTH;
 	si_player_sprite->length = SI_PLAYER_LENGTH;
@@ -157,34 +157,34 @@ void si_init_player(Screen * screen, struct si_player * player, int health, int 
 	si_player_sprite->bitmaps = bitmaps_player;
 	si_player_sprite->index = 0;
 
-	struct si_movement * si_movement_player = &player->movement;
+	si_movement * si_movement_player = &player->movement;
 	si_movement_player->direction = SI_DIRECTION_NONE;
 	si_movement_player->mode = SI_MOVEMENT_MODE_PLAYER;
 	si_movement_player->step = step;
 
-	struct si_position * si_position_player = &player->position;
+	si_position * si_position_player = &player->position;
 	si_position_player->x = (screen->width - si_player_sprite->width * si_player_sprite->scale) / 2;
 	si_position_player->y = screen->height - (si_player_sprite->length / si_player_sprite->width) * si_player_sprite->scale;
 
-	struct si_boundary * si_boundary_player = &player->position.boundary;
+	si_boundary * si_boundary_player = &player->position.boundary;
 	si_boundary_player->x_min = 0;
 	si_boundary_player->x_max = screen->width - si_player_sprite->width * si_player_sprite->scale;
 	si_boundary_player->y_min = 0;
 	si_boundary_player->y_max = 0;
 
-	struct si_weapon * si_weapon_player = &player->weapon;
+	si_weapon * si_weapon_player = &player->weapon;
 	si_weapon_player->per_cycles = weapon_per_cycles;
 	si_weapon_player->cycles = 0;
 	si_weapon_player->triggering = 0;
 
-	struct si_bullet_group * si_bullet_group = &player->bullet_group;
+	si_bullet_group * si_bullet_group = &player->bullet_group;
 
 	uint8_t ** bitmaps_bullet = (uint8_t **) pvPortMalloc(1 * sizeof(uint8_t *));
 	uint8_t * bitmap_bullet = (uint8_t *) pvPortMalloc(sizeof(SI_BULLET_BITMAP));
 	memcpy(bitmap_bullet, SI_BULLET_BITMAP, sizeof(SI_BULLET_BITMAP));
 	bitmaps_bullet[0] = bitmap_bullet;
 
-	struct si_sprite * si_bullet_sprite = &player->bullet_group.sprite;
+	si_sprite * si_bullet_sprite = &player->bullet_group.sprite;
 
 	si_bullet_sprite->width = SI_BULLET_WIDTH;
 	si_bullet_sprite->length = SI_BULLET_LENGTH;
@@ -193,24 +193,24 @@ void si_init_player(Screen * screen, struct si_player * player, int health, int 
 	si_bullet_sprite->bitmaps = bitmaps_bullet;
 	si_bullet_sprite->index = 0;
 
-	struct si_bullet * si_bullets = (struct si_bullet *) pvPortMalloc(SI_BULLET_MAX_COUNT * sizeof(struct si_bullet));
+	si_bullet * si_bullets = (si_bullet *) pvPortMalloc(SI_BULLET_MAX_COUNT * sizeof(si_bullet));
 
 	for (int bullet_index = 0; bullet_index < SI_BULLET_MAX_COUNT; bullet_index++) {
-		struct si_bullet * bullet = &si_bullets[bullet_index];
-		struct si_position * si_position = &bullet->position;
+		si_bullet * bullet = &si_bullets[bullet_index];
+		si_position * si_position = &bullet->position;
 
 		si_position->x = 0;
 		si_position->y = 0;
 
 
-		struct si_boundary * si_boundary = &bullet->position.boundary;
+		si_boundary * si_boundary = &bullet->position.boundary;
 		si_boundary->x_min = 0;
 		si_boundary->x_max = 0;
 		si_boundary->y_min = 0;
 		si_boundary->y_max = 0;
 	}
 
-	struct si_movement * si_bullet_movement = &player->bullet_group.movement;
+	si_movement * si_bullet_movement = &player->bullet_group.movement;
 	si_bullet_movement->direction = SI_DIRECTION_UP;
 	si_bullet_movement->mode = SI_MOVEMENT_MODE_BULLET;
 	si_bullet_movement->step = 50;
@@ -221,24 +221,24 @@ void si_init_player(Screen * screen, struct si_player * player, int health, int 
 	si_bullet_group->count = 0;
 }
 
-void si_init_level(Screen * screen, struct si_level * level, int enemy_group_count)
+void si_init_level(Screen * screen, si_level * level, int enemy_group_count)
 {
 	level->group_count = enemy_group_count;
 }
 
-void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, int full_health, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset)
+void si_init_enemy_group(Screen * screen, si_enemy_group * enemy_group, int sprite_index, int enemy_count, int step, int full_health, float formation_width, float full_width, int * group_pos_y, int * bitmap_offset)
 {
 	enemy_group->count = enemy_count;
 	enemy_group->full_health = full_health;
 	enemy_group->formation_width = screen->width * formation_width;
 	enemy_group->full_width = screen->width * full_width;
 
-	struct si_movement * si_movement1 = &enemy_group->movement;
+	si_movement * si_movement1 = &enemy_group->movement;
 	si_movement1->direction = SI_DIRECTION_LEFT;
 	si_movement1->mode = SI_MOVEMENT_MODE_ENEMY;
 	si_movement1->step = step;
 
-	struct si_sprite * si_enemy_sprite = &enemy_group->sprite;
+	si_sprite * si_enemy_sprite = &enemy_group->sprite;
 
 	si_enemy_sprite->width = SI_ENEMY_WIDTHS[sprite_index];
 	si_enemy_sprite->length = SI_ENEMY_LENGTHS[sprite_index];
@@ -260,7 +260,7 @@ void si_init_enemy_group(Screen * screen, struct si_enemy_group * enemy_group, i
 	enemy_group->enemies = si_init_enemies(screen, enemy_group, group_pos_y);
 }
 
-struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy_group, int * group_pos_y)
+si_enemy * si_init_enemies(Screen * screen, si_enemy_group * enemy_group, int * group_pos_y)
 {
 	int height = enemy_group->sprite.length / enemy_group->sprite.width;
 	int enemy_per_row = enemy_group->formation_width / (enemy_group->sprite.width * enemy_group->sprite.scale); // floor
@@ -269,7 +269,7 @@ struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy
 
 	int max_offset = (enemy_group->full_width - enemy_group->formation_width) / 2;
 
-	struct si_enemy * enemies = (struct si_enemy *) pvPortMalloc(enemy_group->count * sizeof(struct si_enemy));
+	si_enemy * enemies = (si_enemy *) pvPortMalloc(enemy_group->count * sizeof(si_enemy));
 
 	int index = 0;
 	for (int row_index = 0; row_index < enemy_rows; row_index++) {
@@ -279,7 +279,7 @@ struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy
 		int enemy_pos_x = (screen->width - enemy_group->formation_width) / 2 + group_space_left_width / 2;
 		// render enemy
 		for (int cell_index = 0; cell_index < per_row; cell_index++) {
-			struct si_enemy * curr_enemy = &enemies[index++];
+			si_enemy * curr_enemy = &enemies[index++];
 			curr_enemy->health = enemy_group->full_health;
 
 			curr_enemy->position.x = enemy_pos_x;
@@ -298,7 +298,7 @@ struct si_enemy * si_init_enemies(Screen * screen, struct si_enemy_group * enemy
 	return enemies;
 }
 
-void si_update_view(Screen * screen, struct si_game * game, struct joystick_state * state)
+void si_update_view(Screen * screen, si_game * game, joystick_state * state)
 {
 	if (game->curr_view == SI_GAME_VIEW_START) {
 		if (state->y < 1024) {
@@ -324,21 +324,21 @@ void si_update_view(Screen * screen, struct si_game * game, struct joystick_stat
 
 }
 
-void si_update(Screen * screen, struct si_game * game)
+void si_update(Screen * screen, si_game * game)
 {
 	if (game->curr_view != SI_GAME_VIEW_GAME) {
 		return;
 	}
 
 	// update level
-	struct si_level *curr_level = &game->curr_level;
+	si_level *curr_level = &game->curr_level;
 
 	int shift = -1;
 	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
-		struct si_enemy_group *curr_group = &curr_level->enemy_groups[enemy_group_index];
+		si_enemy_group *curr_group = &curr_level->enemy_groups[enemy_group_index];
 		int wrap = 0;
 		for (int enemy_index = 0; enemy_index < curr_group->count; enemy_index++) {
-			struct si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
+			si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
 			if (curr_enemy->health == 0) {
 				continue;
 			}
@@ -358,12 +358,12 @@ void si_update(Screen * screen, struct si_game * game)
 
 	// update bullets
 	for (int bullet_index = 0; bullet_index < game->player.bullet_group.count; bullet_index++) {
-		struct si_bullet * bullet = &game->player.bullet_group.bullets[bullet_index];
+		si_bullet * bullet = &game->player.bullet_group.bullets[bullet_index];
 		si_update_position(&game->player.bullet_group.movement, &bullet->position, 0);
 	}
 
 	for (int bullet_index = 0; bullet_index < game->player.bullet_group.count; bullet_index++) {
-		struct si_bullet * bullet = &game->player.bullet_group.bullets[bullet_index];
+		si_bullet * bullet = &game->player.bullet_group.bullets[bullet_index];
 
 		if (bullet->position.y == bullet->position.boundary.y_min) {
 			// remove bullet, move last to current index to avoid blanks
@@ -376,10 +376,10 @@ void si_update(Screen * screen, struct si_game * game)
 			int hit = 0;
 			// AABB collision detection with enemies
 			for (int enemy_group_index = curr_level->group_count - 1; enemy_group_index >= 0; enemy_group_index--) {
-				struct si_enemy_group *curr_group = &curr_level->enemy_groups[enemy_group_index];
+				si_enemy_group *curr_group = &curr_level->enemy_groups[enemy_group_index];
 
 				for (int enemy_index = curr_group->count - 1; enemy_index >= 0; enemy_index--) {
-					struct si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
+					si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
 					if (curr_enemy->health == 0) {
 						continue;
 					}
@@ -419,7 +419,7 @@ void si_update(Screen * screen, struct si_game * game)
 		if (game->player.bullet_group.count >= game->player.bullet_group.capacity) {
 			// TODO ERROR cannot spawn more bullets
 		} else {
-			struct si_bullet * bullet = &game->player.bullet_group.bullets[game->player.bullet_group.count++];
+			si_bullet * bullet = &game->player.bullet_group.bullets[game->player.bullet_group.count++];
 
 			bullet->position.x = game->player.position.x
 					+ game->player.sprite.width * game->player.sprite.scale / 2
@@ -452,10 +452,10 @@ void si_update(Screen * screen, struct si_game * game)
 
 	// check if enemy too close
 	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
-		struct si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
+		si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
 
 		for (int enemy_index = 0; enemy_index < curr_group->count; enemy_index++) {
-			struct si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
+			si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
 			if (curr_enemy->health == 0) {
 				continue;
 			}
@@ -475,7 +475,7 @@ void si_update(Screen * screen, struct si_game * game)
 	}
 }
 
-int si_update_position(struct si_movement * movement, struct si_position * position, int shift)
+int si_update_position(si_movement * movement, si_position * position, int shift)
 {
 	if (movement->direction == SI_DIRECTION_NONE) return 0;
 
@@ -522,14 +522,14 @@ int si_update_position(struct si_movement * movement, struct si_position * posit
 	return wrap;
 }
 
-void si_update_sprite(struct si_sprite * sprite)
+void si_update_sprite(si_sprite * sprite)
 {
 	if (sprite->count == 1) return;
 
 	sprite->index = (sprite->index + 1) % sprite->count;
 }
 
-void si_render(Screen * screen, struct si_game * game)
+void si_render(Screen * screen, si_game * game)
 {
 	//render game
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
@@ -548,15 +548,15 @@ void si_render(Screen * screen, struct si_game * game)
 		BSP_LCD_DisplayStringAt(0, screen->height / 2 + 64, buffer4, CENTER_MODE);
 	} else if (game->curr_view == SI_GAME_VIEW_GAME) {
 		//render level
-		struct si_level *curr_level = &game->curr_level;
+		si_level *curr_level = &game->curr_level;
 
 		// render enemies
 		for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
-			struct si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
-			struct si_sprite * curr_sprite = &curr_group->sprite;
+			si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
+			si_sprite * curr_sprite = &curr_group->sprite;
 
 			for (int enemy_index = 0; enemy_index < curr_group->count; enemy_index++) {
-				struct si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
+				si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
 				if (curr_enemy->health == 0) {
 					continue;
 				}
@@ -565,12 +565,12 @@ void si_render(Screen * screen, struct si_game * game)
 		}
 
 		// render player & player's bullets
-		struct si_player * player = &game->player;
-		struct si_sprite * sprite = &player->sprite;
+		si_player * player = &game->player;
+		si_sprite * sprite = &player->sprite;
 
 		si_render_sprite(sprite, player->position.x, player->position.y, LCD_COLOR_WHITE);
 		for (int bullet_index = 0; bullet_index < player->bullet_group.count; bullet_index++) {
-			struct si_bullet * bullet = &player->bullet_group.bullets[bullet_index];
+			si_bullet * bullet = &player->bullet_group.bullets[bullet_index];
 			si_render_sprite(&player->bullet_group.sprite, bullet->position.x, bullet->position.y, LCD_COLOR_WHITE);
 		}
 
@@ -595,7 +595,7 @@ void si_render(Screen * screen, struct si_game * game)
 	}
 }
 
-void si_render_sprite(struct si_sprite * sprite, int x, int y, uint32_t front_color)
+void si_render_sprite(si_sprite * sprite, int x, int y, uint32_t front_color)
 {
 	uint8_t * bitmap = sprite->bitmaps[sprite->index];
 	int height = sprite->length / sprite->width;
@@ -615,7 +615,7 @@ void si_render_sprite(struct si_sprite * sprite, int x, int y, uint32_t front_co
 	}
 }
 
-void si_render_header(Screen * screen, struct si_game * game)
+void si_render_header(Screen * screen, si_game * game)
 {
 
 	unsigned char buffer[128];
@@ -653,10 +653,10 @@ void si_render_header(Screen * screen, struct si_game * game)
 	BSP_LCD_DrawHLine(0, game->header_height, screen->width);
 }
 
-void si_restart_level(Screen * screen, struct si_game * game)
+void si_restart_level(Screen * screen, si_game * game)
 {
-	struct si_level *curr_level = &game->levels[game->curr_level_index];
-	struct si_level *new_level = &game->curr_level;
+	si_level *curr_level = &game->levels[game->curr_level_index];
+	si_level *new_level = &game->curr_level;
 
 	// allocate memory for current level
 	if (new_level->enemy_groups != NULL) {
@@ -667,13 +667,13 @@ void si_restart_level(Screen * screen, struct si_game * game)
 	}
 
 	new_level->group_count = curr_level->group_count;
-	struct si_enemy_group * enemy_groups = (struct si_enemy_group *) pvPortMalloc(new_level->group_count * sizeof(struct si_enemy_group));
+	si_enemy_group * enemy_groups = (si_enemy_group *) pvPortMalloc(new_level->group_count * sizeof(si_enemy_group));
 	new_level->enemy_groups = enemy_groups;
 
 	int enemy_count = 0;
 	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
-		struct si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
-		struct si_enemy_group * new_group = &new_level->enemy_groups[enemy_group_index];
+		si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
+		si_enemy_group * new_group = &new_level->enemy_groups[enemy_group_index];
 
 		new_group->count = curr_group->count;
 		new_group->full_health = curr_group->full_health;
@@ -691,14 +691,14 @@ void si_restart_level(Screen * screen, struct si_game * game)
 		new_group->sprite.index = curr_group->sprite.index;
 		new_group->sprite.bitmaps = curr_group->sprite.bitmaps;
 
-		struct si_enemy * enemies = (struct si_enemy *) pvPortMalloc(new_group->count * sizeof(struct si_enemy));
+		si_enemy * enemies = (si_enemy *) pvPortMalloc(new_group->count * sizeof(si_enemy));
 		new_group->enemies = enemies;
 
 		enemy_count+= new_group->count;
 
 		for (int enemy_index = 0; enemy_index < new_group->count; enemy_index++) {
-			struct si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
-			struct si_enemy * new_enemy = &new_group->enemies[enemy_index];
+			si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
+			si_enemy * new_enemy = &new_group->enemies[enemy_index];
 
 			new_enemy->health = curr_enemy->health;
 
@@ -715,25 +715,25 @@ void si_restart_level(Screen * screen, struct si_game * game)
 	new_level->enemy_alive_count = enemy_count;
 }
 
-void si_restart_enemy_positions(Screen * screen, struct si_game * game)
+void si_restart_enemy_positions(Screen * screen, si_game * game)
 {
-	struct si_level *curr_level = &game->levels[game->curr_level_index];
-	struct si_level *new_level = &game->curr_level;
+	si_level *curr_level = &game->levels[game->curr_level_index];
+	si_level *new_level = &game->curr_level;
 
 	for (int enemy_group_index = 0; enemy_group_index < curr_level->group_count; enemy_group_index++) {
-		struct si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
-		struct si_enemy_group * new_group = &new_level->enemy_groups[enemy_group_index];
+		si_enemy_group * curr_group = &curr_level->enemy_groups[enemy_group_index];
+		si_enemy_group * new_group = &new_level->enemy_groups[enemy_group_index];
 
 		for (int enemy_index = 0; enemy_index < new_group->count; enemy_index++) {
-			struct si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
-			struct si_enemy * new_enemy = &new_group->enemies[enemy_index];
+			si_enemy * curr_enemy = &curr_group->enemies[enemy_index];
+			si_enemy * new_enemy = &new_group->enemies[enemy_index];
 			new_enemy->position.x = curr_enemy->position.x;
 			new_enemy->position.y = curr_enemy->position.y;
 		}
 	}
 }
 
-void si_restart_stats(struct si_game * game)
+void si_restart_stats(si_game * game)
 {
 	game->score = 0;
 	game->time_start = HAL_GetTick();

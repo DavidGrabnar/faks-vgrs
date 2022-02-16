@@ -35,9 +35,9 @@ osThreadId_t GameUpdateTaskHandle;
 osThreadId_t HandleInputTaskHandle;
 
 Screen screen;
-struct si_game game;
+si_game game;
 
-struct joystick_state joystick_state;
+joystick_state jstate;
 
 /* Private function prototypes -----------------------------------------------*/
 static void MPU_Config(void);
@@ -164,7 +164,7 @@ void GameUpdateTask(void *argument)
   while(1)
   {
 	sc_screen_swap_buffers(&screen);
-	si_update_view(&screen, &game, &joystick_state);
+	si_update_view(&screen, &game, &jstate);
 	si_update(&screen, &game);
 	si_render(&screen, &game);
     osDelay(game.tick_duration);
@@ -177,7 +177,7 @@ void HandleInputTask(void *argument)
 {
   while(1)
   {
-	joystick_read(&joystick_state);
+	joystick_read(&jstate);
     osDelay(INPUT_HANDLE_INTERVAL);
   }
 }

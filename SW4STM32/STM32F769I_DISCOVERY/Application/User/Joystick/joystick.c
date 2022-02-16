@@ -12,7 +12,7 @@
 PA4     ------> ADC1_IN4
 PA6     ------> ADC1_IN6
 */
-struct joystick_config config = {
+joystick_config config = {
 		.gpio_x = GPIOA,
 		.pin_x = GPIO_PIN_6,
 		.adc_channel_x = ADC_CHANNEL_6,
@@ -50,7 +50,7 @@ int joystick_init()
 	return 0;
 }
 
-int joystick_read(struct joystick_state * state)
+int joystick_read(joystick_state * state)
 {
 	ADC_ChannelConfTypeDef sConfig = {0};
 
