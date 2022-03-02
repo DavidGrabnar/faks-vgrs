@@ -111,7 +111,6 @@ typedef struct
 typedef struct
 {
 	si_position position;
-	// TODO bullet
 
 	int health;
 } si_enemy;

@@ -417,7 +417,7 @@ void si_update(Screen * screen, si_game * game)
 	}
 	else if (game->player.weapon.triggering) {
 		if (game->player.bullet_group.count >= game->player.bullet_group.capacity) {
-			// TODO ERROR cannot spawn more bullets
+			// ERROR cannot spawn more bullets - wait for bullet buffer to get cleared
 		} else {
 			si_bullet * bullet = &game->player.bullet_group.bullets[game->player.bullet_group.count++];
 
